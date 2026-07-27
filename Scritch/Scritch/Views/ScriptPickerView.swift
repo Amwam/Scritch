@@ -30,6 +30,7 @@ struct ScriptPickerView: View {
                 .fill(ColorPair.overlayColor.color(for: colorScheme))
                 .contentShape(Rectangle())
                 .onTapGesture { model.dismiss() }
+                .accessibilityIdentifier("picker.scrim")
 
             popover
                 .frame(width: popoverWidth)
@@ -90,6 +91,7 @@ struct ScriptPickerView: View {
                 model.updateQuery(newValue)
             }
             .modifier(PickerKeyHandlers(model: model))
+            .accessibilityIdentifier("picker.searchField")
     }
 
     // MARK: - Results
@@ -119,6 +121,7 @@ struct ScriptPickerView: View {
         .focusEffectDisabled()
         .focused($focus, equals: .list)
         .modifier(PickerKeyHandlers(model: model))
+        .accessibilityIdentifier("picker.resultsList")
     }
 }
 
@@ -206,6 +209,14 @@ private struct ScriptRow: View {
                 ? Color(nsColor: .selectedContentBackgroundColor)
                 : Color.clear
         )
+        // Stable per-row identifier keyed off the script's own name, e.g.
+        // "picker.row.Base64 Encode". Phase 4 must keep script names as the key.
+        .accessibilityIdentifier("picker.row.\(script.name ?? "")")
+        // Exposes highlight state for UI tests without depending on script
+        // ordering (which is not guaranteed stable): a test can look for
+        // whichever row currently reports "selected" rather than assuming
+        // a specific script occupies a specific index.
+        .accessibilityValue(isSelected ? "selected" : "")
     }
 
     private var titleColor: Color {

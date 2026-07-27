@@ -23,13 +23,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private static let appWindowName = "scritch.app.window"
     
     func applicationWillFinishLaunching(_ notification: Notification) {
+        resetStateForUITestsIfRequested()
+
         ScritchColorScheme.applyTheme()
-        
+
         NSWindow.allowsAutomaticWindowTabbing = false
         NSApp.servicesProvider = self
-        
+
         // Restore app window frame.
         window.setFrameUsingName(AppDelegate.appWindowName)
+    }
+
+    /// UI tests launch the (sandboxed) app as a persistent process whose
+    /// `UserDefaults` survive between test runs. To keep the suite hermetic,
+    /// tests pass `UITEST_RESET_STATE=1` in `launchEnvironment`, which wipes the
+    /// handful of defaults a test could otherwise leak into later runs — the
+    /// editor's persisted language override and the preferences colour scheme.
+    /// Has no effect outside of UI testing.
+    private func resetStateForUITestsIfRequested() {
+        guard ProcessInfo.processInfo.environment["UITEST_RESET_STATE"] == "1" else { return }
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "editorLanguageMode")
+        defaults.removeObject(forKey: ScritchColorScheme.userPreferencesSchemeKey)
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

@@ -22,6 +22,7 @@ struct StatusBarView: View {
             Text(message)
                 .font(.system(size: 12, weight: .light))
                 .foregroundColor(Color(nsColor: .headerTextColor))
+                .accessibilityIdentifier("statusBar.message")
 
             if let link = updateLink {
                 LearnMoreLink(link: link)

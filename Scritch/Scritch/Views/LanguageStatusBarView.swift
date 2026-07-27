@@ -34,6 +34,7 @@ struct LanguageStatusBarView: View {
             .controlSize(.small)
             .font(.system(size: NSFont.smallSystemFontSize))
             .fixedSize()
+            .accessibilityIdentifier("languageBar.picker")
         }
         .padding(.trailing, 8)
         .frame(height: 24)

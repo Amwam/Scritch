@@ -146,6 +146,11 @@ final class CodeEditorView: NSView {
             controller.view.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
+        // Stable identifier for UI tests. This is the actual `TextView` that owns
+        // keyboard input and accessibility (role `.textArea`), not the wrapping
+        // `NSView`/`CodeEditorView`, so it's what XCUITest should query and click.
+        textView.setAccessibilityIdentifier("editor.textView")
+
         restorePersistedLanguageMode()
     }
 

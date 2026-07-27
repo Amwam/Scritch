@@ -14,10 +14,12 @@ struct SettingsView: View {
             ScriptsSettingsView()
                 .tabItem {
                     Label("Scripts", systemImage: "text.and.command.macwindow")
+                        .accessibilityIdentifier("settings.tab.scripts")
                 }
             ThemeSettingsView()
                 .tabItem {
                     Label("Colors", systemImage: "paintpalette")
+                        .accessibilityIdentifier("settings.tab.colors")
                 }
         }
         .padding(20)
@@ -130,6 +132,7 @@ struct ThemeSettingsView: View {
                 }
                 .labelsHidden()
                 .frame(width: 167)
+                .accessibilityIdentifier("settings.colorSchemePicker")
             }
             .frame(width: 300)
         }
