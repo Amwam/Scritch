@@ -57,6 +57,8 @@
 		2C9761D52214E11600AFF8CD /* scripts in Resources */ = {isa = PBXBuildFile; fileRef = 2C9761D42214E11600AFF8CD /* scripts */; };
 		2C9761D92214E3B500AFF8CD /* ScriptsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C9761D82214E3B500AFF8CD /* ScriptsTableViewController.swift */; };
 		2C9761DC2214E45300AFF8CD /* ScriptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C9761DB2214E45300AFF8CD /* ScriptManager.swift */; };
+		FA0000000000000000000B02 /* StatusStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000B01 /* StatusStore.swift */; };
+		FA0000000000000000000B03 /* StatusStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000B01 /* StatusStore.swift */; };
 		2C9761DF2214E46800AFF8CD /* Script.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C9761DE2214E46800AFF8CD /* Script.swift */; };
 		2C9761E12214E68D00AFF8CD /* ScriptTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C9761E02214E68D00AFF8CD /* ScriptTableViewCell.swift */; };
 		2C9D045C24A2DAC600D27D20 /* ThemeSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CEC93F9249C2D600080B9B8 /* ThemeSettingsViewController.swift */; };
@@ -138,6 +140,7 @@
 		2C9118B523406B530018916F /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		2C9761D42214E11600AFF8CD /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
 		2C9761D82214E3B500AFF8CD /* ScriptsTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptsTableViewController.swift; sourceTree = "<group>"; };
+		FA0000000000000000000B01 /* StatusStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusStore.swift; sourceTree = "<group>"; };
 		2C9761DB2214E45300AFF8CD /* ScriptManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScriptManager.swift; sourceTree = "<group>"; };
 		2C9761DE2214E46800AFF8CD /* Script.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Script.swift; sourceTree = "<group>"; };
 		2C9761E02214E68D00AFF8CD /* ScriptTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptTableViewCell.swift; sourceTree = "<group>"; };
@@ -302,6 +305,7 @@
 				2C9761DD2214E45D00AFF8CD /* Models */,
 				2C9761DB2214E45300AFF8CD /* ScriptManager.swift */,
 				2C60A4A12482FE9E006496BA /* UpdateBuddy.swift */,
+				FA0000000000000000000B01 /* StatusStore.swift */,
 			);
 			path = System;
 			sourceTree = "<group>";
@@ -514,6 +518,7 @@
 				2C9761DF2214E46800AFF8CD /* Script.swift in Sources */,
 				2C60A4A4248300CE006496BA /* AppVersion.swift in Sources */,
 				2C9761DC2214E45300AFF8CD /* ScriptManager.swift in Sources */,
+				FA0000000000000000000B02 /* StatusStore.swift in Sources */,
 				2C20667621FD628E0082570E /* AppDelegate.swift in Sources */,
 				2C20669E21FE445E0082570E /* OverlayView.swift in Sources */,
 				2C9761E12214E68D00AFF8CD /* ScriptTableViewCell.swift in Sources */,
@@ -547,6 +552,7 @@
 				2C60A54124871273006496BA /* AppVersion.swift in Sources */,
 				2C9D045C24A2DAC600D27D20 /* ThemeSettingsViewController.swift in Sources */,
 				2C60A54324871273006496BA /* ScriptManager.swift in Sources */,
+				FA0000000000000000000B03 /* StatusStore.swift in Sources */,
 				2C60A54424871273006496BA /* AppDelegate.swift in Sources */,
 				2C873BE42697C34200D9A3F0 /* PopoverContainerView.swift in Sources */,
 				2C60A54524871273006496BA /* OverlayView.swift in Sources */,

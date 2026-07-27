@@ -7,91 +7,55 @@
 //
 
 import Cocoa
-
-enum Status {
-    case normal
-    case updateAvailable(String)
-    case help(String)
-    case info(String)
-    case error(String)
-    case success(String)
-}
+import Combine
 
 @IBDesignable
 class StatusView: NSView {
-    
+
     let transitionLength = 0.3
-    let messageLength = 10.0
-    
+
     @IBOutlet weak var textLabel: NSTextField!
     @IBOutlet weak var updateLabel: UpdateTextField!
-    
-    var queue = [Status]()
-    var running = false
-    var current = Status.normal
-    
-    
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        
-        self.wantsLayer = true
-        
-        self.layer?.backgroundColor = ColorPair.normal.value(for: self.effectiveAppearance).cgColor
-        self.layer?.cornerRadius = 5
-        
+
+    /// The state this view renders. Settable so a later phase can inject it.
+    var store: StatusStore = .shared {
+        didSet { observeStore() }
     }
 
-    func setStatus(_ newStatus: Status) {
-        
-        switch newStatus {
-        case .normal, .help(_), .updateAvailable:
-            // Skip the queue for those statuses
-            running = false
-            queue.removeAll()
-            self.current = newStatus
-            self.updateText(newStatus)
-            self.updateColor(newStatus)
-        default:
-            queue.append(newStatus)
-            queueUpdated()
-        }
-        
-        
+    private var current = Status.normal
+    private var cancellable: AnyCancellable?
+
+    override func awakeFromNib() {
+        super.awakeFromNib()
+
+        self.wantsLayer = true
+
+        self.layer?.backgroundColor = ColorPair.normal.value(for: self.effectiveAppearance).cgColor
+        self.layer?.cornerRadius = 5
+
+        observeStore()
     }
-    
-    func queueUpdated() {
-        guard !running else {
-            return
+
+    private func observeStore() {
+        // `@Published` replays the current value on subscribe, so this also
+        // performs the initial render.
+        cancellable = store.$current.sink { [weak self] status in
+            self?.render(status)
         }
-        
-        guard !queue.isEmpty else {
-            running = false
-            self.updateText(.normal)
-            self.updateColor(.normal)
-            self.current = .normal
-            return
-        }
-        
-        running = true
-        
-        let next = queue.removeFirst()
-        
-        self.updateText(next)
-        self.updateColor(next)
-        self.current = next
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + messageLength, execute: {
-            self.running = false
-            self.queueUpdated()
-        })
     }
-    
+
+    private func render(_ newStatus: Status) {
+        self.current = newStatus
+        self.updateText(newStatus)
+        self.updateColor(newStatus)
+    }
+
     fileprivate func updateText(_ newStatus: Status) {
-        
+
         var text = ""
-        
+
         self.updateLabel.isHidden = true
-        
+
         switch newStatus {
         case .help(let value):
             text = value
@@ -105,15 +69,15 @@ class StatusView: NSView {
             text = "Press ⌘+B to get started"
         case .updateAvailable(let link):
             text = "New version available! "
-        
+
             self.updateLabel.isHidden = false
             self.updateLabel.link = link
-            
+
         }
-        
+
         self.textLabel.stringValue = text
     }
-    
+
     fileprivate func fadeText(to alphaValue: CGFloat, completionHandler: (() -> Void)? = nil) {
         NSAnimationContext.runAnimationGroup({ (context) in
             context.duration = self.transitionLength / 2.5
@@ -122,11 +86,11 @@ class StatusView: NSView {
             completionHandler?()
         }
     }
-    
+
     fileprivate func updateColor(_ newStatus: Status) {
-        
+
         var color = ColorPair.normal
-        
+
         switch newStatus {
         case .normal, .help(_):
             break
@@ -139,10 +103,10 @@ class StatusView: NSView {
         case .updateAvailable:
             color = ColorPair.purple
         }
-        
+
         self.layer?.backgroundColor = color.value(for: self.effectiveAppearance).cgColor
     }
-    
+
     override func viewDidChangeEffectiveAppearance() {
         self.updateColor(self.current)
     }

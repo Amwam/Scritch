@@ -14,7 +14,8 @@ class PopoverViewController: NSViewController {
     @IBOutlet weak var popoverView: PopoverContainerView!
     @IBOutlet weak var searchField: SearchField!
     @IBOutlet weak var editorView: CodeEditorView!
-    @IBOutlet weak var statusView: StatusView!
+    /// Status bar state. Settable so a later phase can inject it.
+    var statusStore: StatusStore = .shared
     
     @IBOutlet weak var scriptManager: ScriptManager!
     
@@ -125,7 +126,7 @@ class PopoverViewController: NSViewController {
         popoverView.show()
         
         // FIXME: Use localized strings
-        statusView.setStatus(.help("Select your action"))
+        statusStore.setStatus(.help("Select your action"))
         
         self.searchField.stringValue = ""
         self.tableHeightConstraint.constant = 0
@@ -141,7 +142,7 @@ class PopoverViewController: NSViewController {
         overlayView.hide()
         popoverView.hide()
         
-        statusView.setStatus(.normal)
+        statusStore.setStatus(.normal)
         
         self.view.window?.makeFirstResponder(self.editorView.textView)
         self.enabled = false

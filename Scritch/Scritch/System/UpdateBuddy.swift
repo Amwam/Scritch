@@ -10,7 +10,8 @@ import Foundation
 
 class UpdateBuddy: NSObject {
     
-    @IBOutlet weak var statusView: StatusView!
+    /// Status bar state. Settable so a later phase can inject it.
+    var statusStore: StatusStore = .shared
     
     var firstCheck = true
     
@@ -67,9 +68,9 @@ class UpdateBuddy: NSObject {
         }
         
         if latest.version.compare(thisVersion, options: .numeric) == .orderedDescending {
-            self.statusView.setStatus(.updateAvailable(latest.link))
+            self.statusStore.setStatus(.updateAvailable(latest.link))
         } else if !firstCheck {
-            self.statusView.setStatus(.success("Scritch is up to date!"))
+            self.statusStore.setStatus(.success("Scritch is up to date!"))
         }
         
         self.firstCheck = false
