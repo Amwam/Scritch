@@ -1,11 +1,11 @@
 
 # Additional scripts
 
-This folder contains useful scripts not included in the default Boop library you might want to download. 
+This folder contains useful scripts not included in the default Scritch library you might want to download. 
 
 ## Installing new scripts
 
-To install a new script, simply download the .js file and place it into the same folder as your custom scripts. If Boop is already open, reload scripts from the `Scripts` menu.
+To install a new script, simply download the .js file and place it into the same folder as your custom scripts. If Scritch is already open, reload scripts from the `Scripts` menu.
 
 ## Contributing
 

@@ -1,41 +1,53 @@
 
-# Boop.
+# Scritch.
 
+> **Scritch is a fork of [Boop](https://github.com/IvanMathy/Boop)** by [Ivan Mathy](https://github.com/IvanMathy).
+> All the original ideas, design and the vast majority of the code are theirs — Scritch just takes it in
+> its own direction. Please go star the [upstream project](https://github.com/IvanMathy/Boop).
 
 <p align="center">
-
-  <img src="Boop/Documentation/Images/UI.png?raw=true" width="663" alt="UI Screenshot">
+  <img src="Scritch/Documentation/Images/UI.png?raw=true" width="663" alt="UI Screenshot">
 </p>
 
-
 <p align="center">
-  <a href="https://app.bitrise.io/app/b0c493f8b65e1dac"><img src="https://app.bitrise.io/app/b0c493f8b65e1dac/status.svg?token=BoJJDoViYpKy8V_O5P7ljA&branch=main"></a>
-  <a href="https://sonarcloud.io/dashboard?id=IvanMathy_Boop"><img src="https://sonarcloud.io/api/project_badges/measure?project=IvanMathy_Boop&metric=alert_status"></a>
-</p>   
-<p align="center">
-  <a href="https://boop.okat.best/">Website</a>  •  <a href="https://github.com/IvanMathy/Boop/releases">Download from GitHub</a>  •  <a href="https://apps.apple.com/us/app/boop/id1518425043">Get on the Mac App Store</a><br/>
-    <a href="https://github.com/IvanMathy/Boop/blob/main/Boop/Documentation/Readme.md">Documentation</a>  •  <a href="https://github.com/IvanMathy/Boop/tree/main/Scripts">Find more scripts</a>
+  <a href="https://github.com/Amwam/Scritch/blob/main/Scritch/Documentation/Readme.md">Documentation</a>  •  <a href="https://github.com/Amwam/Scritch/tree/main/Scripts">Find more scripts</a>
 </p>
 
-### How to get Boop
+Scritch is a scriptable scratchpad for developers. Paste some text in, run a transformation on it —
+format some JSON, decode a JWT, hash a string, convert CSV to JSON — and copy the result back out.
+No files, no projects, no ceremony.
 
-There are four ways to get Boop. Your best bet is either to
+### How to get Scritch
 
- - <a href="https://github.com/IvanMathy/Boop/releases">Download from GitHub releases</a> or
- - <a href="https://apps.apple.com/us/app/boop/id1518425043">Download on the Mac App Store</a><br/>.
-
- You can also build it from source, or <a href="https://formulae.brew.sh/cask/boop#default">get it from Homebrew</a>, although that is not officially supported.
-
-### How to build from source
-
-If you're just trying to get Boop, building from source might not be your best bet. Developing new scripts does not require building from source.
+Scritch has no packaged releases yet, so for now you build it from source:
 
 - Clone or download a copy of the repository
-- Open `Boop/Boop.xcodeproj`
+- Open `Scritch/Scritch.xcodeproj`
 - Press play
 
+If you want a ready-made, signed, App Store-distributed build today, you want
+[Boop](https://github.com/IvanMathy/Boop) instead.
+
+### Scripts
+
+Scritch runs the same JavaScript transformation scripts as Boop, so **scripts written for Boop work
+here unmodified**. Both module prefixes resolve:
+
+```js
+const { encode } = require('@scritch/base64')  // preferred
+const { encode } = require('@boop/base64')     // still supported
+```
+
+See [Custom scripts](Scritch/Documentation/CustomScripts.md) to write your own.
 
 ### Documentation
 
-- [Documentation](Boop/Documentation/Readme.md)
-- [Custom scripts](Boop/Documentation/CustomScripts.md)
+- [Documentation](Scritch/Documentation/Readme.md)
+- [Custom scripts](Scritch/Documentation/CustomScripts.md)
+- [Modules](Scritch/Documentation/Modules.md)
+- [Debugging scripts](Scritch/Documentation/Debugging.md)
+
+### License
+
+Scritch inherits Boop's license — see [LICENSE](LICENSE). Original copyright remains with the
+upstream authors.

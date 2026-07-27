@@ -14,7 +14,7 @@
 ///
 /// Generates a Markdown Glossary file for the project specified in the input parameters.
 /// Run the script with no input text to create the input JSON required by the glossary generator.
-/// Fill in the required values, and re-run the Boop Script to generate the glossary.
+/// Fill in the required values, and re-run the Scritch Script to generate the glossary.
 ///
 function main(state) {
 	
