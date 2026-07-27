@@ -5,181 +5,111 @@
 //  Created by Ivan on 1/27/19.
 //  Copyright © 2019 OKatBest. All rights reserved.
 //
+//  All that is left of the old AppKit picker: this hosts `ScriptPickerView`
+//  inside the XIB's window and wires `ScriptPickerModel` to `ScriptManager`,
+//  the editor and the app delegate. Once the window itself is SwiftUI this
+//  whole class goes away.
+//
 
 import Cocoa
+import SwiftUI
 
 class PopoverViewController: NSViewController {
 
-    @IBOutlet weak var overlayView: OverlayView!
-    @IBOutlet weak var popoverView: PopoverContainerView!
-    @IBOutlet weak var searchField: SearchField!
     @IBOutlet weak var editorView: CodeEditorView!
+    @IBOutlet weak var scriptManager: ScriptManager!
+    @IBOutlet weak var appDelegate: AppDelegate!
+
     /// Status bar state. Settable so a later phase can inject it.
     var statusStore: StatusStore = .shared
-    
-    @IBOutlet weak var scriptManager: ScriptManager!
-    
-    @IBOutlet weak var tableView: ScriptTableView!
-    @IBOutlet weak var tableHeightConstraint: NSLayoutConstraint!
-    @IBOutlet weak var tableViewController: ScriptsTableViewController!
-    @IBOutlet weak var appDelegate: AppDelegate!
-    
-    var enabled = false // Closed by default
+
+    /// The picker's state. Settable for the same reason.
+    var model = ScriptPickerModel()
+
+    private var hostingView: NSHostingView<ScriptPickerView>?
+
+    /// How long the SwiftUI fade takes; we keep the host in the view hierarchy
+    /// until it finishes, then hide it so it stops swallowing clicks.
+    private static let fadeDuration = 0.2
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Double-click script selection
-        tableView.doubleAction = #selector(runSelectedScript)
-
-        // Dismiss popover on background view click
-        overlayView.onMouseDown = { [weak self] in
+        model.searchProvider = { [weak self] query in
+            self?.scriptManager.search(query) ?? []
+        }
+        model.onDismiss = { [weak self] in
             self?.hide()
         }
-        
-        setupKeyHandlers()
-    }
-    
-    func setupKeyHandlers() {
-        
-        var keyHandler: (_: NSEvent) -> NSEvent?
-        keyHandler = {
-            (_ theEvent: NSEvent) -> NSEvent? in
-            
-            var didSomething = false
-                
-            // Key codes:
-            let kVKTab = 0x30
-            // 125 is down arrow
-            // 126 is up
-            // 53 is escape
-            // 36 is enter
-       
-            if theEvent.keyCode == 53 && self.enabled { // ESCAPE
-                
-                // Let's dismiss the popover
-                self.hide()
-                
-                didSomething = true
-            }
-            
-            if theEvent.keyCode == 36 && self.enabled { // ENTER
-
-                guard self.tableViewController.selectedScript != nil else {
-                    return theEvent
-                }
-
-                self.runSelectedScript()
-                
-                didSomething = true
-            }
-
-            let window = self.view.window
-            
-            if theEvent.keyCode == kVKTab && self.enabled {
-                if window?.firstResponder is NSTextView &&
-                    (window?.firstResponder as! NSTextView).delegate is SearchField {
-                    let offset = theEvent.modifierFlags.contains(.shift) ? -1 : 1
-                    let newSel = IndexSet([self.tableView.selectedRow + offset])
-                    self.tableView.selectRowIndexes(newSel, byExtendingSelection: false)
-                    self.tableView.scrollRowToVisible(self.tableView.selectedRow)
-                }
-                didSomething = true // prevent tabbing back into text document
-            }
-
-            if window?.firstResponder is NSTextView &&
-                (window?.firstResponder as! NSTextView).delegate is SearchField &&
-                theEvent.keyCode == 125 { // DOWN
-                
-                // Why -1? I don't know, and I don't even care.
-                let indexSet = IndexSet(integer: -1)
-                self.tableView.selectRowIndexes(indexSet, byExtendingSelection: false)
-                window?.makeFirstResponder(self.tableView)
-            }
-            
-            // Oh hey look now somehow it's 0.
-            if window?.firstResponder is NSTableView &&
-                self.tableView.selectedRow == 0 &&
-                theEvent.keyCode == 126 { // UP
-                
-                window?.makeFirstResponder(self.searchField)
-                // This doesn't work for some reason.
-                //self.searchField.moveToEndOfLine(nil)
-            }
-            
-            guard didSomething else {
-                return theEvent
-            }
-            
-            // Return an empty event to avoid the funk sound
-            return nil
+        model.onRun = { [weak self] script in
+            guard let self = self else { return }
+            // Dismiss first, then run, in case the script needs to show a status.
+            self.hide()
+            self.scriptManager.runScript(script, into: self.editorView)
         }
-        
-        // Creates an object we do not own, but must keep track
-        // of it so that it can be "removed" when we're done
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: keyHandler)
-        
+
+        installHostingView()
+        view.isHidden = true
     }
-    
+
+    private func installHostingView() {
+        let hosting = NSHostingView(rootView: ScriptPickerView(model: model))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(hosting)
+
+        NSLayoutConstraint.activate([
+            hosting.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hosting.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hosting.topAnchor.constraint(equalTo: view.topAnchor),
+            hosting.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        hostingView = hosting
+    }
+
     func show() {
-        overlayView.show()
-        popoverView.show()
-        
+        guard !model.isPresented else { return }
+
+        model.reset()
+        view.isHidden = false
+        model.isPresented = true
+
         // FIXME: Use localized strings
         statusStore.setStatus(.help("Select your action"))
-        
-        self.searchField.stringValue = ""
-        self.tableHeightConstraint.constant = 0
-        
-        self.view.window?.makeFirstResponder(self.searchField)
-        self.enabled = true
-        
+
+        if let hostingView = hostingView {
+            view.window?.makeFirstResponder(hostingView)
+        }
+        // Give SwiftUI a turn of the run loop to install the text field before
+        // asking it for the keyboard.
+        DispatchQueue.main.async { [weak self] in
+            self?.model.focus = .search
+        }
+
         appDelegate.setPopover(isOpen: true)
-        
     }
-    
+
     func hide() {
-        overlayView.hide()
-        popoverView.hide()
-        
+        guard model.isPresented else { return }
+
+        model.isPresented = false
+        model.focus = nil
+        model.reset()
+
         statusStore.setStatus(.normal)
-        
-        self.view.window?.makeFirstResponder(self.editorView.textView)
-        self.enabled = false
-        self.tableHeightConstraint.animator().constant = 0
-        
-        tableViewController.results = []
-        
+
+        view.window?.makeFirstResponder(editorView.textView)
+
         appDelegate.setPopover(isOpen: false)
+
+        // Let the fade finish before taking the host out of the hit-test path.
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.fadeDuration) { [weak self] in
+            guard let self = self, !self.model.isPresented else { return }
+            self.view.isHidden = true
+        }
     }
-    
+
     func runScriptAgain() {
         self.scriptManager.runScriptAgain(editor: self.editorView)
-    }
-
-    @objc private func runSelectedScript() {
-        guard let script = tableViewController.selectedScript else {
-            return
-        }
-
-        // Let's dismiss the popover
-        hide()
-
-        // Run the script afterwards in case we need to show a status
-        scriptManager.runScript(script, into: editorView)
-    }
-    
-}
-
-extension PopoverViewController: NSTextFieldDelegate {
-    func controlTextDidChange(_ obj: Notification) {
-        guard (obj.object as? SearchField) == searchField else {
-            return
-        }
-        
-        let results = scriptManager.search(searchField.stringValue)
-        tableViewController.results = results
-        
-        self.tableHeightConstraint.constant = CGFloat(45 * min(5, results.count) + ((results.count != 0) ? 20 : 0))
     }
 }
