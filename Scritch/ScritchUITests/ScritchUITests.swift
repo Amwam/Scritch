@@ -29,13 +29,18 @@ final class ScritchUITests: XCTestCase {
     // warm-up exists purely to absorb that one-time hit on a harmless launch
     // so it doesn't consume a substantive test. It is not silencing a real bug.
     func testAAAWarmUpAppLaunch() {
-        // `XCTExpectFailure` rather than a plain assertion: when the hazard
-        // described above isn't present (a clean machine, or the user's Xcode
-        // debug session has ended), this launch just succeeds and there's
-        // nothing to expect-fail — either way the test reports green, but an
-        // actual occurrence stays visible in the result bundle as an expected
-        // failure rather than being silently swallowed.
+        // `XCTExpectFailure` rather than a plain assertion, so an actual
+        // occurrence stays visible in the result bundle as an expected failure
+        // rather than being silently swallowed.
+        //
+        // `isStrict = false` is load-bearing: it defaults to `true`, which
+        // would fail this test with "expected failure did not occur" on a
+        // clean machine where the hazard is absent. That would tie the suite's
+        // greenness to the presence of a stale debug session — exactly
+        // backwards. Non-strict means: absorb the hit if it happens, pass
+        // quietly if it doesn't.
         var options = XCTExpectedFailure.Options()
+        options.isStrict = false
         options.issueMatcher = { $0.compactDescription.contains("Failed to terminate") }
         XCTExpectFailure(
             "Absorbs a stale-Xcode-debug-session launch hazard external to this app; see comment above.",
