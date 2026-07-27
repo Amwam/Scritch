@@ -66,10 +66,19 @@
 		A748E4464AA8708A11515E96 /* LanguageDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58AA0C0BEAEA7560A22B25A2 /* LanguageDetector.swift */; };
 		FA00000000000000000000B2 /* LanguageDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA00000000000000000000B1 /* LanguageDetectorTests.swift */; };
 		FE9914ABC60011DE7C02B479 /* CodeEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7CAC5EE9DEEDD9C060F0A1 /* CodeEditorView.swift */; };
+		FA0000000000000000000C94 /* ScritchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000C90 /* ScritchUITests.swift */; };
+		FA0000000000000000000C95 /* UITestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000C91 /* UITestSupport.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
 		2C17C66C24271DDA005C911C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2C20666A21FD628E0082570E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C20667121FD628E0082570E;
+			remoteInfo = Scritch;
+		};
+		FA0000000000000000000C9B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 2C20666A21FD628E0082570E /* Project object */;
 			proxyType = 1;
@@ -139,6 +148,10 @@
 		88CC9512F965F0497C7BBA33 /* ScritchEditorTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScritchEditorTheme.swift; sourceTree = "<group>"; };
 		BA7CAC5EE9DEEDD9C060F0A1 /* CodeEditorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodeEditorView.swift; sourceTree = "<group>"; };
 		FA00000000000000000000B1 /* LanguageDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageDetectorTests.swift; sourceTree = "<group>"; };
+		FA0000000000000000000C90 /* ScritchUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScritchUITests.swift; sourceTree = "<group>"; };
+		FA0000000000000000000C91 /* UITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestSupport.swift; sourceTree = "<group>"; };
+		FA0000000000000000000C92 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FA0000000000000000000C93 /* ScritchUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScritchUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -167,6 +180,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA0000000000000000000C99 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -187,6 +207,7 @@
 				2C5ED41C2357F65400322893 /* UI */,
 				2C20667421FD628E0082570E /* Scritch */,
 				2C17C66824271DDA005C911C /* ScritchTests */,
+				FA0000000000000000000C97 /* ScritchUITests */,
 				2C20667321FD628E0082570E /* Products */,
 				53D77B44249A4019002A2F02 /* Frameworks */,
 			);
@@ -198,8 +219,19 @@
 				2C20667221FD628E0082570E /* Scritch.app */,
 				2C17C66724271DDA005C911C /* ScritchTests.xctest */,
 				2C60A56024871273006496BA /* Scritch.app */,
+				FA0000000000000000000C93 /* ScritchUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FA0000000000000000000C97 /* ScritchUITests */ = {
+			isa = PBXGroup;
+			children = (
+				FA0000000000000000000C90 /* ScritchUITests.swift */,
+				FA0000000000000000000C91 /* UITestSupport.swift */,
+				FA0000000000000000000C92 /* Info.plist */,
+			);
+			path = ScritchUITests;
 			sourceTree = "<group>";
 		};
 		2C20667421FD628E0082570E /* Scritch */ = {
@@ -398,6 +430,24 @@
 			productReference = 2C60A56024871273006496BA /* Scritch.app */;
 			productType = "com.apple.product-type.application";
 		};
+		FA0000000000000000000C98 /* ScritchUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA0000000000000000000C9F /* Build configuration list for PBXNativeTarget "ScritchUITests" */;
+			buildPhases = (
+				FA0000000000000000000C9A /* Sources */,
+				FA0000000000000000000C99 /* Frameworks */,
+				FA0000000000000000000C9C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FA0000000000000000000C9D /* PBXTargetDependency */,
+			);
+			name = ScritchUITests;
+			productName = ScritchUITests;
+			productReference = FA0000000000000000000C93 /* ScritchUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -414,6 +464,10 @@
 					};
 					2C20667121FD628E0082570E = {
 						CreatedOnToolsVersion = 10.1;
+					};
+					FA0000000000000000000C98 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = 2C20667121FD628E0082570E;
 					};
 				};
 			};
@@ -437,6 +491,7 @@
 				2C20667121FD628E0082570E /* Scritch */,
 				2C17C66624271DDA005C911C /* ScritchTests */,
 				2C60A53924871273006496BA /* Scritch (App Store) */,
+				FA0000000000000000000C98 /* ScritchUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -466,6 +521,13 @@
 				2C60A55524871273006496BA /* scripts in Resources */,
 				2C60A55624871273006496BA /* Assets.xcassets in Resources */,
 				2C60A55724871273006496BA /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FA0000000000000000000C9C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -542,6 +604,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FA0000000000000000000C9A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA0000000000000000000C94 /* ScritchUITests.swift in Sources */,
+				FA0000000000000000000C95 /* UITestSupport.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -549,6 +620,11 @@
 			isa = PBXTargetDependency;
 			target = 2C20667121FD628E0082570E /* Scritch */;
 			targetProxy = 2C17C66C24271DDA005C911C /* PBXContainerItemProxy */;
+		};
+		FA0000000000000000000C9D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C20667121FD628E0082570E /* Scritch */;
+			targetProxy = FA0000000000000000000C9B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -851,6 +927,54 @@
 			};
 			name = Release;
 		};
+		FA0000000000000000000C9E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = ScritchUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.amwam.ScritchUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Scritch;
+			};
+			name = Debug;
+		};
+		FA0000000000000000000C96 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = ScritchUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.amwam.ScritchUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Scritch;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -886,6 +1010,15 @@
 			buildConfigurations = (
 				2C60A55E24871273006496BA /* Debug */,
 				2C60A55F24871273006496BA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FA0000000000000000000C9F /* Build configuration list for PBXNativeTarget "ScritchUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA0000000000000000000C9E /* Debug */,
+				FA0000000000000000000C96 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

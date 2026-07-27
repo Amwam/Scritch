@@ -35,6 +35,10 @@ struct LanguageStatusBarView: View {
             .font(.system(size: NSFont.smallSystemFontSize))
             .fixedSize()
             .accessibilityIdentifier("languageBar.picker")
+            // `Menu`'s rendered title isn't reliably exposed through XCUITest's
+            // `label`/`value` for this control role, so mirror it explicitly as
+            // the accessibility value UI tests can depend on.
+            .accessibilityValue(currentTitle)
         }
         .padding(.trailing, 8)
         .frame(height: 24)

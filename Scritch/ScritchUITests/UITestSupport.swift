@@ -22,8 +22,10 @@
 //                                  because script load order is not guaranteed.
 //    statusBar.message            - the toolbar status pill's text
 //    languageBar.picker           - the bottom language bar's menu button; its
-//                                  label/title is the human-readable status
-//                                  ("Auto", "Auto · Bash", "Python", ...)
+//                                  accessibility *value* (not label — macOS
+//                                  doesn't reliably expose a Menu's title as
+//                                  `label` to XCUITest) is the human-readable
+//                                  status ("Auto", "Auto · Bash", "Python", ...)
 //    settings.tab.scripts         - Preferences window's "Scripts" tab control
 //    settings.tab.colors          - Preferences window's "Colors" tab control
 //    settings.colorSchemePicker   - Preferences window's colour scheme picker
@@ -47,13 +49,53 @@ extension XCTestCase {
     }
 }
 
+extension XCTestCase {
+
+    /// Waits for `element`'s visible text to equal `text`. Checked against both
+    /// `label` and `value` because macOS exposes plain `Text` content via the
+    /// AX *value* attribute (not *label*/title) for some element roles — using
+    /// only one or the other flakes depending on exactly what backs the view.
+    @discardableResult
+    func waitForText(_ text: String, in element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
+        let predicate = NSPredicate(format: "label == %@ OR value == %@", text, text)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    /// Same as `waitForText`, but a substring match — for labels like "Auto · Bash".
+    @discardableResult
+    func waitForTextContaining(_ text: String, in element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
+        let predicate = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", text, text)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    /// Polls `condition` until it's true or `timeout` elapses, using an
+    /// `NSPredicate` block expectation so XCTest's own synchronization/polling
+    /// drives it — a hand-rolled `RunLoop.run(until:)` spin loop was observed
+    /// to sometimes evaluate a stale accessibility snapshot instead of
+    /// re-querying live UI state.
+    @discardableResult
+    func waitUntil(timeout: TimeInterval = 5, condition: @escaping () -> Bool) -> Bool {
+        let predicate = NSPredicate { _, _ in condition() }
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: NSObject())
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+}
+
 extension XCUIApplication {
 
     /// Looks up an element by accessibility identifier without committing to
     /// a specific `XCUIElementType` — deliberately, since Phase 4 may change
     /// which concrete AppKit/SwiftUI type backs any of these identifiers.
+    ///
+    /// Uses `.firstMatch` rather than the query's string subscript: SwiftUI
+    /// sometimes attaches the same identifier to more than one accessibility
+    /// node for a single view (e.g. a container and a transient duplicate
+    /// during a list re-render), and the subscript form hard-fails as soon as
+    /// a query is ambiguous rather than just picking one.
     func el(_ identifier: String) -> XCUIElement {
-        descendants(matching: .any)[identifier]
+        descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
     var editorTextView: XCUIElement { el("editor.textView") }
