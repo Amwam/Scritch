@@ -676,51 +676,6 @@ Gw
                         <customView key="view" misplaced="YES" id="zMi-QK-dkF" customClass="StatusView" customModule="Scritch" customModuleProvider="target">
                             <rect key="frame" x="0.0" y="14" width="208" height="0.0"/>
                             <autoresizingMask key="autoresizingMask"/>
-                            <subviews>
-                                <stackView distribution="equalCentering" orientation="horizontal" alignment="centerY" spacing="0.0" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Nlt-yx-S75">
-                                    <rect key="frame" x="4" y="0.0" width="200" height="20"/>
-                                    <subviews>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aib-Zm-MbW">
-                                            <rect key="frame" x="26" y="3" width="148" height="15"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Press ⌘+B to get started" drawsBackground="YES" id="Sc8-Qd-kcQ">
-                                                <font key="font" metaFont="systemLight" size="12"/>
-                                                <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                            </textFieldCell>
-                                        </textField>
-                                        <textField hidden="YES" focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="751" translatesAutoresizingMaskIntoConstraints="NO" id="PpN-Z0-jAa" customClass="UpdateTextField" customModule="Scritch" customModuleProvider="target">
-                                            <rect key="frame" x="0.0" y="6" width="69" height="14"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Learn More" drawsBackground="YES" id="o6X-4x-gie">
-                                                <font key="font" metaFont="systemMedium" size="11"/>
-                                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                            </textFieldCell>
-                                        </textField>
-                                    </subviews>
-                                    <constraints>
-                                        <constraint firstAttribute="width" constant="200" id="Dev-i3-vUc"/>
-                                        <constraint firstAttribute="height" constant="20" id="UsD-XM-AIh"/>
-                                    </constraints>
-                                    <visibilityPriorities>
-                                        <integer value="1000"/>
-                                        <integer value="1000"/>
-                                    </visibilityPriorities>
-                                    <customSpacing>
-                                        <real value="3.4028234663852886e+38"/>
-                                        <real value="3.4028234663852886e+38"/>
-                                    </customSpacing>
-                                </stackView>
-                            </subviews>
-                            <constraints>
-                                <constraint firstAttribute="trailing" secondItem="Nlt-yx-S75" secondAttribute="trailing" constant="4" id="1AS-iZ-Raj"/>
-                                <constraint firstItem="Nlt-yx-S75" firstAttribute="leading" secondItem="zMi-QK-dkF" secondAttribute="leading" constant="4" id="C54-Ji-PJq"/>
-                                <constraint firstAttribute="bottom" secondItem="Nlt-yx-S75" secondAttribute="bottom" id="mOX-WA-ibz"/>
-                                <constraint firstItem="Nlt-yx-S75" firstAttribute="top" secondItem="zMi-QK-dkF" secondAttribute="top" id="wDK-gM-b7p"/>
-                            </constraints>
-                            <connections>
-                                <outlet property="textLabel" destination="aib-Zm-MbW" id="fh0-MQ-n06"/>
-                                <outlet property="updateLabel" destination="PpN-Z0-jAa" id="0F4-Dh-c5b"/>
-                            </connections>
                         </customView>
                     </toolbarItem>
                 </allowedToolbarItems>

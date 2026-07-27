@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import SwiftUI
 
 class MainViewController: NSViewController {
 
@@ -14,7 +15,10 @@ class MainViewController: NSViewController {
     @IBOutlet weak var updateBuddy: UpdateBuddy!
     @IBOutlet weak var checkUpdateMenuItem: NSMenuItem!
 
-    private let languageStatusBar = LanguageStatusBar()
+    /// Bridges the AppKit editor and the SwiftUI language bar.
+    private let languageModel = EditorLanguageModel()
+    private lazy var languageStatusBar: NSView =
+        NSHostingView(rootView: LanguageStatusBarView(model: languageModel))
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,19 +58,19 @@ class MainViewController: NSViewController {
             editorView.bottomAnchor.constraint(equalTo: languageStatusBar.topAnchor)
         ])
 
-        languageStatusBar.onSelectLanguage = { [weak self] language in
+        languageModel.onSelectLanguage = { [weak self] language in
             self?.editorView.overrideLanguage(language)
         }
-        languageStatusBar.onSelectAuto = { [weak self] in
+        languageModel.onSelectAuto = { [weak self] in
             self?.editorView.resetToAutoLanguage()
         }
         editorView.onLanguageChange = { [weak self] language, isAuto in
-            self?.languageStatusBar.update(language: language, isAuto: isAuto)
+            self?.languageModel.update(language: language, isAuto: isAuto)
         }
 
         // Seed the bar with the editor's current state.
-        languageStatusBar.update(language: editorView.currentLanguage,
-                                 isAuto: editorView.isAutoLanguage)
+        languageModel.update(language: editorView.currentLanguage,
+                             isAuto: editorView.isAutoLanguage)
     }
 
     @IBAction func openHelp(_ sender: Any) {
