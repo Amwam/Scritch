@@ -9,7 +9,7 @@
     "bias": -0.2
 }
  **/
-const Papa = require('@boop/papaparse.js');
+const Papa = require('@scritch/papaparse.js');
 
 function main(state) {
     try {
