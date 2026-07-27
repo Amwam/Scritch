@@ -23,7 +23,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private static let appWindowName = "scritch.app.window"
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        ThemeSettingsViewController.applyTheme()
+        ScritchColorScheme.applyTheme()
         
         NSWindow.allowsAutomaticWindowTabbing = false
         NSApp.servicesProvider = self
@@ -42,10 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @IBAction func showPreferencesWindow(_ sender: NSMenuItem) {
-        let controller = NSStoryboard.init(name: "Preferences", bundle: nil).instantiateInitialController() as? NSWindowController
-        
-        controller?.showWindow(sender)
-        
+        SettingsWindowController.shared.show(sender)
     }
     
     // Menu Stuff
