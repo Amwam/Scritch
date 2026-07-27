@@ -1,4 +1,8 @@
 
+<p align="center">
+  <img src="Scritch/Documentation/Images/icon.png?raw=true" width="128" alt="Scritch icon">
+</p>
+
 # Scritch.
 
 > **Scritch is a fork of [Boop](https://github.com/IvanMathy/Boop)** by [Ivan Mathy](https://github.com/IvanMathy).
