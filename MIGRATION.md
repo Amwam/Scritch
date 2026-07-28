@@ -87,6 +87,19 @@ These have each cost real time. Read them.
   PBXBuildFiles, both targets' Sources phases, and the group). There is no Xcode automation here.
   Object ID convention in use: `FA0000000000000000000C..`. Allocated so far: `C0x`–`CFx`.
   **Next free prefix: `D0x`.** Verify edits with `plutil -lint`.
+- **SwiftUI runs `.onKeyPress` actions inside the view update pass.** Mutating an `ObservableObject`
+  straight from one is "Publishing changes from within view updates is not allowed" — measured at 18
+  warnings for four arrow presses in the picker. Handlers must decide their `KeyPress.Result` from
+  reads alone and defer the mutation (`DispatchQueue.main.async`). **But do not defer handlers that
+  end in a text mutation**: deferring `.return` (which runs a script) takes the replacement outside
+  the key event and silently breaks undo — `testUndoRestoresTextAfterScriptRuns` goes red while the
+  script itself still appears to work. `escape`/`return` are therefore left synchronous and still
+  emit ~20 warnings each; that is pre-existing (baseline measures 19 and 26) and unfixed.
+- **These warnings only reach the unified log, never stderr.** Redirecting the app's output shows
+  nothing. Use `/usr/bin/log show --last 10m --predicate 'eventMessage CONTAINS "view updates"'`
+  (note: `log` is shadowed in this shell, so the absolute path is required).
+- **XCUITest runs fine with the display asleep.** It needs an unlocked, GUI-attached `Aqua` session,
+  not a lit panel. Screen *lock*, an SSH-only session, or switching users are what break it.
 - **`MainMenu.xib` is gone** (deleted in Phase 4a), so the old "verify XIB edits parse" check no
   longer applies. There are no XIBs or storyboards left in the project.
 

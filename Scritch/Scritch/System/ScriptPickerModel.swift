@@ -31,8 +31,19 @@ final class ScriptPickerModel: ObservableObject {
     @Published private(set) var results: [Script] = []
     /// Index of the highlighted row, or `nil` when nothing is highlighted.
     @Published var selection: Int?
-    /// Which field should own the keyboard. Mirrored into `@FocusState`.
-    @Published var focus: Field?
+    /// Which field should own the keyboard. This is a one-way *request*: the
+    /// view mirrors it into `@FocusState` and never writes back. The previous
+    /// two-way sync wrote this from inside `onChange(of: focusState)`, which
+    /// SwiftUI runs during the view update — the same "publishing from within
+    /// view updates" shape the key handlers had to be moved off.
+    @Published private(set) var focus: Field?
+
+    /// Bumped by every focus request. The view observes this rather than
+    /// `focus` itself, so re-requesting the field the model last requested
+    /// still moves the keyboard — SwiftUI can move focus on its own (a mouse
+    /// click into the search field) and the model deliberately no longer
+    /// observes that, so `focus` alone can be stale.
+    @Published private(set) var focusToken = 0
 
     /// Supplies results for a query. Wired to `ScriptManager.search(_:)`.
     var searchProvider: ((String) -> [Script])?
@@ -94,18 +105,24 @@ final class ScriptPickerModel: ObservableObject {
         selection = index
     }
 
+    /// Asks the view to move the keyboard to `field`.
+    func requestFocus(_ field: Field?) {
+        focus = field
+        focusToken &+= 1
+    }
+
     /// Down arrow from the search field: move into the list, on its first row.
     func focusList() {
         guard !results.isEmpty else { return }
         selection = 0
-        focus = .list
+        requestFocus(.list)
     }
 
     /// Up arrow on the first row: go back to the search field. The old table
     /// deselected everything when it resigned first responder, so we do too.
     func focusSearch() {
         selection = nil
-        focus = .search
+        requestFocus(.search)
     }
 
     // MARK: - Commands

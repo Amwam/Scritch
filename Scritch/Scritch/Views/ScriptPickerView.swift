@@ -42,11 +42,10 @@ struct ScriptPickerView: View {
         // Escape is routed as a cancel action before it ever reaches
         // `onKeyPress`, so handle it here as well. `dismiss()` is guarded.
         .onExitCommand { model.dismiss() }
-        .onChange(of: model.focus) { _, newValue in
-            if focus != newValue { focus = newValue }
-        }
-        .onChange(of: focus) { _, newValue in
-            if model.focus != newValue { model.focus = newValue }
+        // One-way: the model requests focus, the view obeys. There is
+        // deliberately no write-back — see `ScriptPickerModel.focus`.
+        .onChange(of: model.focusToken) { _, _ in
+            focus = model.focus
         }
     }
 
@@ -90,7 +89,7 @@ struct ScriptPickerView: View {
             .onChange(of: model.query) { _, newValue in
                 model.updateQuery(newValue)
             }
-            .modifier(PickerKeyHandlers(model: model))
+            .modifier(PickerKeyHandlers(model: model, field: .search))
             .accessibilityIdentifier("picker.searchField")
     }
 
@@ -120,7 +119,7 @@ struct ScriptPickerView: View {
         .focusable()
         .focusEffectDisabled()
         .focused($focus, equals: .list)
-        .modifier(PickerKeyHandlers(model: model))
+        .modifier(PickerKeyHandlers(model: model, field: .list))
         .accessibilityIdentifier("picker.resultsList")
     }
 }
@@ -134,6 +133,23 @@ struct ScriptPickerView: View {
 private struct PickerKeyHandlers: ViewModifier {
 
     @ObservedObject var model: ScriptPickerModel
+    /// Which area these handlers are attached to. Taken as a plain value
+    /// rather than read back off the model, so key handling never depends on
+    /// the model's view of where focus is.
+    let field: ScriptPickerModel.Field
+
+    /// SwiftUI evaluates `onKeyPress` actions *inside the view update pass*, so
+    /// publishing from one is "Publishing changes from within view updates is
+    /// not allowed" — measured at 24 warnings per four arrow presses.
+    ///
+    /// Only the highlight/focus keys are deferred. `escape` and `return` are
+    /// deliberately left synchronous: they end in `hidePicker()` +
+    /// `ScriptManager.runScript`, and deferring those off the key event breaks
+    /// undo — `testUndoRestoresTextAfterScriptRuns` goes red. Neither emits the
+    /// warning anyway, because the picker tears down rather than re-rendering.
+    private func enqueue(_ body: @escaping () -> Void) {
+        DispatchQueue.main.async(execute: body)
+    }
 
     func body(content: Content) -> some View {
         content
@@ -147,24 +163,25 @@ private struct PickerKeyHandlers: ViewModifier {
             .onKeyPress(keys: [.tab]) { press in
                 // Tab moves the highlight without moving focus, and is always
                 // swallowed so focus can never escape back to the document.
-                model.moveSelection(by: press.modifiers.contains(.shift) ? -1 : 1)
+                let offset = press.modifiers.contains(.shift) ? -1 : 1
+                enqueue { model.moveSelection(by: offset) }
                 return .handled
             }
             .onKeyPress(.downArrow) {
-                if model.focus == .search {
+                if field == .search {
                     guard !model.results.isEmpty else { return .ignored }
-                    model.focusList()
+                    enqueue { model.focusList() }
                 } else {
-                    model.moveSelection(by: 1)
+                    enqueue { model.moveSelection(by: 1) }
                 }
                 return .handled
             }
             .onKeyPress(.upArrow) {
-                guard model.focus == .list else { return .ignored }
+                guard field == .list else { return .ignored }
                 if (model.selection ?? 0) <= 0 {
-                    model.focusSearch()
+                    enqueue { model.focusSearch() }
                 } else {
-                    model.moveSelection(by: -1)
+                    enqueue { model.moveSelection(by: -1) }
                 }
                 return .handled
             }

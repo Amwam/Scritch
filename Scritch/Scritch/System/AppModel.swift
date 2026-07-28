@@ -79,7 +79,7 @@ final class AppModel: ObservableObject {
         // Give SwiftUI a turn of the run loop to install the text field before
         // asking it for the keyboard.
         DispatchQueue.main.async { [weak self] in
-            self?.pickerModel.focus = .search
+            self?.pickerModel.requestFocus(.search)
         }
     }
 
@@ -87,7 +87,7 @@ final class AppModel: ObservableObject {
         guard pickerModel.isPresented else { return }
 
         pickerModel.isPresented = false
-        pickerModel.focus = nil
+        pickerModel.requestFocus(nil)
         pickerModel.reset()
 
         statusStore.setStatus(.normal)
