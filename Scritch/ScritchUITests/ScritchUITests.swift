@@ -227,15 +227,21 @@ final class ScritchUITests: XCTestCase {
             "Tab should move the highlight to the other row"
         )
 
-        // NOTE: Shift-Tab (moving the highlight back) is intentionally not
-        // asserted here. `ScriptPickerModel.moveSelection(by: -1)` is exercised
-        // and passes reliably under Up-arrow-from-the-list in
-        // `testDownArrowEntersListAndUpArrowOnFirstRowReturnsToSearch`, but
-        // XCUITest's synthesized `typeKey(.tab, modifierFlags: .shift)` did not
-        // reliably reach the app in this environment (reproduced across many
-        // runs/timeouts) even though forward Tab always does. This looks like
-        // an XCUITest key-synthesis limitation rather than an app bug, but it
-        // was not fully root-caused — see the test suite's final report.
+        // Shift-Tab moves the highlight back. This was previously skipped on
+        // the theory that XCUITest's synthesized Shift-Tab never reached the
+        // app; driving the real app outside XCUITest disproved that. macOS
+        // sends Shift-Tab as the back-tab character (U+0019) rather than
+        // `.tab` carrying `.shift`, so `onKeyPress(keys: [.tab])` never matched
+        // and the highlight genuinely did not move. The picker now accepts
+        // both spellings, so this is asserted rather than documented away.
+        app.typeKey(.tab, modifierFlags: .shift)
+        XCTAssertTrue(
+            waitUntil(timeout: 10) {
+                (isSelected("Base64 Encode") || isSelected("Base64 Decode"))
+                    && isSelected("Base64 Encode") == firstWasEncode
+            },
+            "Shift-Tab should move the highlight back to the previous row"
+        )
     }
 
     func testDownArrowEntersListAndUpArrowOnFirstRowReturnsToSearch() {

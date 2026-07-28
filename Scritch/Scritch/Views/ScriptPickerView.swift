@@ -138,6 +138,9 @@ private struct PickerKeyHandlers: ViewModifier {
     /// the model's view of where focus is.
     let field: ScriptPickerModel.Field
 
+    /// `NSBackTabCharacter` — what AppKit actually sends for Shift-Tab.
+    private static let backTab = KeyEquivalent("\u{19}")
+
     /// SwiftUI evaluates `onKeyPress` actions *inside the view update pass*, so
     /// publishing from one is "Publishing changes from within view updates is
     /// not allowed" — measured at 24 warnings per four arrow presses.
@@ -160,11 +163,16 @@ private struct PickerKeyHandlers: ViewModifier {
             .onKeyPress(.return) {
                 model.runSelected() ? .handled : .ignored
             }
-            .onKeyPress(keys: [.tab]) { press in
+            .onKeyPress(keys: [.tab, Self.backTab]) { press in
                 // Tab moves the highlight without moving focus, and is always
                 // swallowed so focus can never escape back to the document.
-                let offset = press.modifiers.contains(.shift) ? -1 : 1
-                enqueue { model.moveSelection(by: offset) }
+                //
+                // macOS delivers Shift-Tab as the back-tab character (U+0019),
+                // *not* as `.tab` carrying `.shift`, so `keys: [.tab]` alone
+                // never matched it and the reverse highlight silently did
+                // nothing. Accept both, and treat either spelling as backward.
+                let isBackward = press.key == Self.backTab || press.modifiers.contains(.shift)
+                enqueue { model.moveSelection(by: isBackward ? -1 : 1) }
                 return .handled
             }
             .onKeyPress(.downArrow) {
