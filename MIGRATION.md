@@ -90,11 +90,18 @@ These have each cost real time. Read them.
 - **SwiftUI runs `.onKeyPress` actions inside the view update pass.** Mutating an `ObservableObject`
   straight from one is "Publishing changes from within view updates is not allowed" — measured at 18
   warnings for four arrow presses in the picker. Handlers must decide their `KeyPress.Result` from
-  reads alone and defer the mutation (`DispatchQueue.main.async`). **But do not defer handlers that
-  end in a text mutation**: deferring `.return` (which runs a script) takes the replacement outside
-  the key event and silently breaks undo — `testUndoRestoresTextAfterScriptRuns` goes red while the
-  script itself still appears to work. `escape`/`return` are therefore left synchronous and still
-  emit ~20 warnings each; that is pre-existing (baseline measures 19 and 26) and unfixed.
+  reads alone and defer the mutation (`DispatchQueue.main.async`). **But do not defer the text
+  mutation itself**: `CodeEditorView.replace` groups through `textView.undoManager`, which resolves
+  along the responder chain, so the edit must happen inside the key event with focus already back on
+  the text view. Defer it and the replacement lands with nothing registered to undo — the script
+  appears to work and only `testUndoRestoresTextAfterScriptRuns` catches it. The picker's teardown
+  is therefore split: `runScript` stays synchronous, `AppModel.dismissPickerState()` defers.
+  Escape 22 -> 0 warnings, Return 23 -> 1. The residual 1 is `ScriptManager.runScript`'s own
+  `setStatus(.normal)`, which has to precede `script.run`.
+- **Shift-Tab arrives as the back-tab character (U+0019), not `.tab` + `.shift`.** `onKeyPress(keys:
+  [.tab])` silently never matches it. Match both spellings. When testing this, use a list of 3+ rows
+  with the highlight in the middle: with two rows and the highlight on the last one, "didn't move"
+  is ambiguous, because a forward move does nothing either.
 - **These warnings only reach the unified log, never stderr.** Redirecting the app's output shows
   nothing. Use `/usr/bin/log show --last 10m --predicate 'eventMessage CONTAINS "view updates"'`
   (note: `log` is shadowed in this shell, so the absolute path is required).
@@ -252,17 +259,13 @@ none was a functional regression:
    on the Colors tab. Added to `resetStateForUITestsIfRequested()` — the old NSWindowController
    didn't persist tab selection at all, so the hook had never needed it.
 
-#### Known wart: window frame autosave
+#### Resolved: window frame autosave
 
-`AppDelegate` still saves/restores under `scritch.app.window`, but that key is **never written** —
-the app's defaults contain `NSWindow Frame main` and no `NSWindow Frame scritch.app.window`. The
-`Window("Scritch", id: "main")` scene autosaves the frame itself under its scene id, and wins.
-
-User-visible behaviour is correct (the frame *is* restored), so this is not urgent, but two things
-follow: existing users' frame saved under the old key is orphaned — a one-time window-position reset
-on upgrade — and the `AppDelegate` autosave code is now effectively dead. Either delete it and let
-the scene own the frame, or set the scene's autosave name to `scritch.app.window` to preserve
-continuity. Not done here because it is a behaviour question, not a mechanical one.
+`AppDelegate` used to save/restore under `scritch.app.window` while the `Window` scene autosaved
+under its own id and won, orphaning existing users' saved frame. A scene autosaves under a defaults
+key of literally `NSWindow Frame <id>`, so the scene is now named `scritch.app.window` and the
+delegate's save/restore pair is deleted. Verified by position (the two keys held frames at X=1680
+and X=663; the window restored to X=1680) and by a graceful quit rewriting the legacy key.
 
 #### Why 4b is deferred
 
@@ -357,11 +360,6 @@ The vocabulary is also documented in `ScritchUITests/UITestSupport.swift`'s head
 
 #### Known gaps — do not assume these are covered
 
-- **Shift-Tab reverse-highlight is not asserted.** Forward Tab, Down-into-list and
-  Up-back-to-search are all covered and exercise the same `moveSelection` path with a negative
-  offset, but `typeKey(.tab, modifierFlags: .shift)` reproducibly failed to move the highlight in
-  this environment and could not be root-caused as either an XCUITest key-synthesis limitation or a
-  genuine app gap. **Worth one manual check before trusting Phase 4 blind.**
 - The scripts-folder `NSOpenPanel` is not tested — file-picker sheets aren't practically
   automatable via XCUITest.
 - Preferences persistence exercises Dark only, not all three schemes.
@@ -380,12 +378,13 @@ version of the suite and was fixed; don't let it regress.
 
 ### Next
 
-Phase 4a is done and verified. Remaining threads, in priority order:
+Phases 0-4a are done and verified, as are the three follow-ups that were open after 4a (window-frame
+autosave, Shift-Tab, and the picker's view-update warnings). Remaining:
 
-1. **Decide the window-frame autosave question** — see "Known wart" above.
-2. **Shift-Tab reverse-highlight** in the picker: still never covered by the suite, still worth one
-   manual check.
-3. Phase 4b, if it is ever revived — but see "Why 4b is deferred".
+1. **One residual "publishing from within view updates" warning** on the Return path, from
+   `ScriptManager.runScript`'s `setStatus(.normal)`. Removing it means deferring `StatusStore`'s
+   publish app-wide, which is a behaviour change to a shared component — not obviously worth it.
+2. Phase 4b, if it is ever revived — but see "Why 4b is deferred".
 
 For reference, the full suite is:
 

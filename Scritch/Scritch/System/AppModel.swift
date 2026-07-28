@@ -41,13 +41,27 @@ final class AppModel: ObservableObject {
             self?.scriptManager.search(query) ?? []
         }
         pickerModel.onDismiss = { [weak self] in
-            self?.hidePicker()
+            // Both callbacks are reached from `onKeyPress`, which SwiftUI runs
+            // inside the view update — publishing there is "Publishing changes
+            // from within view updates is not allowed". The teardown publishes
+            // heavily, so it goes on the next run-loop turn.
+            DispatchQueue.main.async { self?.hidePicker() }
         }
         pickerModel.onRun = { [weak self] script in
             guard let self = self else { return }
-            // Dismiss first, then run, in case the script needs to show a status.
-            self.hidePicker()
+            // The script itself must NOT be deferred. `CodeEditorView.replace`
+            // groups through `textView.undoManager`, which resolves along the
+            // responder chain — so focus has to be back on the text view and
+            // the edit has to happen inside the key event, or the replacement
+            // lands with nothing registered to undo and ⌘Z silently does
+            // nothing (`testUndoRestoresTextAfterScriptRuns`).
+            self.editor.window?.makeFirstResponder(self.editor.textView)
             self.scriptManager.runScript(script, into: self.editor)
+            // Only the publishing part defers. It deliberately skips the status
+            // reset that `hidePicker()` does: `ScriptManager.runScript` already
+            // sets `.normal` before running, so resetting here on a later turn
+            // would clobber whatever status the script set.
+            DispatchQueue.main.async { self.dismissPickerState() }
         }
 
         languageModel.onSelectLanguage = { [weak self] language in
@@ -83,17 +97,26 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func hidePicker() {
+    /// Tears down the picker's own state and returns the keyboard to the
+    /// editor, without touching the status. Split out of `hidePicker()` so the
+    /// run path can defer it without clobbering the script's status.
+    func dismissPickerState() {
         guard pickerModel.isPresented else { return }
 
         pickerModel.isPresented = false
         pickerModel.requestFocus(nil)
         pickerModel.reset()
 
-        statusStore.setStatus(.normal)
         isPickerOpen = false
 
         editor.window?.makeFirstResponder(editor.textView)
+    }
+
+    func hidePicker() {
+        guard pickerModel.isPresented else { return }
+
+        dismissPickerState()
+        statusStore.setStatus(.normal)
     }
 
     func togglePicker() {
