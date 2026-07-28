@@ -3,8 +3,8 @@
 //  Scritch
 //
 //  Owns the status bar's state and its queueing/timing behaviour, so that the
-//  system layer (ScriptManager, UpdateBuddy, …) never has to talk to a concrete
-//  AppKit view. `StatusView` is a dumb renderer that observes this store.
+//  system layer (ScriptManager, UpdateBuddy, …) never has to talk to a view.
+//  `StatusBarView` is a dumb renderer that observes this store.
 //
 
 import Foundation
@@ -21,10 +21,10 @@ enum Status {
 
 final class StatusStore: ObservableObject {
 
-    /// Shared instance. XIB-instantiated objects (ScriptManager, UpdateBuddy,
-    /// PopoverViewController) cannot receive injected dependencies yet, so they
-    /// default to this one. Every consumer holds it through a settable property
-    /// so a later phase can hand them a store from the SwiftUI environment.
+    /// Shared instance. `ScriptManager` and `UpdateBuddy` are plain objects
+    /// owned by `AppModel` rather than SwiftUI views, so they can't read a store
+    /// out of the environment and default to this one. Every consumer holds it
+    /// through a settable property so it can still be injected.
     static let shared = StatusStore()
 
     /// How long a queued (non-skipping) status stays on screen.

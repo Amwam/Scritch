@@ -5,8 +5,8 @@
 //  Bridge between the AppKit editor and the SwiftUI language status bar, in the
 //  same spirit as `StatusStore`. The editor pushes its current language/mode in
 //  through `update(language:isAuto:)`; the bar pushes user choices back out
-//  through the two callbacks. When the editor itself becomes SwiftUI (a later
-//  phase) only the wiring in `MainViewController` needs to change.
+//  through the two callbacks. Both ends are wired together in `AppModel.init`,
+//  which is the only place that needs to change if the editor becomes SwiftUI.
 //
 
 import Foundation

@@ -3,8 +3,7 @@
 //  Scritch
 //
 //  SwiftUI rendering of the toolbar status pill. Purely a renderer: all state
-//  and timing lives in `StatusStore`. Hosted inside the XIB's toolbar item by
-//  `StatusView`, which is now nothing more than an `NSHostingView` container.
+//  and timing lives in `StatusStore`. Hosted as a `ToolbarItem` by `ContentView`.
 //
 
 import SwiftUI

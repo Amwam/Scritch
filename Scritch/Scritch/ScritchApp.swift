@@ -4,8 +4,8 @@
 //
 //  The app's entry point. Replaces `@NSApplicationMain` + `MainMenu.xib`;
 //  `AppDelegate` survives via `NSApplicationDelegateAdaptor` for the handful of
-//  things SwiftUI's lifecycle doesn't cover (services provider, window frame
-//  autosave). See `MIGRATION.md` for the full rationale.
+//  things SwiftUI's lifecycle doesn't cover (the services provider, applying the
+//  colour scheme, the UI-test state reset).
 //
 
 import SwiftUI

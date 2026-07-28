@@ -181,7 +181,8 @@ remembered Settings tab).
 - Prefer `@scritch/` in newly written scripts and docs.
 - Scripts run in JavaScriptCore, not Node or a browser: no `window`, `process`, `Crypto`, no npm.
 - `#if APPSTORE` gates the "Check For Updates" menu item; no build configuration currently defines it.
-- `ScritchApp.swift` points at a `MIGRATION.md` for the migration rationale — that file is not in the
-  repo. Don't go looking for it.
+- Comments narrate the SwiftUI migration in terms of the AppKit objects they replaced ("as
+  `MainViewController` used to", "the XIB's File menu had…"). Those references are historical and
+  intentional — the named types no longer exist.
 - User-facing docs live in `Scritch/Documentation/` — `CustomScripts.md` is the script-authoring
   contract and should be updated alongside changes to `ScriptExecution` or `require`.
