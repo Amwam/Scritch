@@ -7,7 +7,7 @@ this up mid-flight.
 **Branch:** `swiftui-migration` (off `main`)
 **Started:** 2026-07-27
 **Status:** Phases 0–4a complete and fully verified — build green, 36 unit tests and all 17
-XCUITests passing. Phase 4b (the `SourceEditor` swap) is deferred.
+XCUITests passing. Phase 4b (the `SourceEditor` swap) is closed as won't-do.
 
 ---
 
@@ -202,8 +202,7 @@ with replacing `CodeEditorView` with the package's `SourceEditor`. Those were se
 
 - **4a (this phase):** items 1–4 and 6 — the `App` struct, `.commands`, the `Settings` scene, the
   toolbar, and `EditorLanguageModel` moving out of controller code.
-- **4b (deferred, and arguably should be dropped):** item 5, the `SourceEditor` swap. See
-  "Why 4b is deferred" below.
+- **4b (closed as won't-do):** item 5, the `SourceEditor` swap. See "Why 4b is closed" below.
 
 Added:
 
@@ -267,7 +266,7 @@ key of literally `NSWindow Frame <id>`, so the scene is now named `scritch.app.w
 delegate's save/restore pair is deleted. Verified by position (the two keys held frames at X=1680
 and X=663; the window restored to X=1680) and by a graceful quit rewriting the legacy key.
 
-#### Why 4b is deferred
+#### Why 4b is closed (won't do)
 
 `CodeEditorView` is already a facade over `TextViewController`, which is exactly what `SourceEditor`
 wraps internally — so swapping it buys no architectural simplification. Against that it risks two
@@ -279,9 +278,15 @@ things the app depends on:
 - `editor.textView` carries the `editor.textView` accessibility identifier the entire XCUITest
   suite hangs off.
 
-If 4b is ever revived, the `NSTextStorage` initialiser (not the `Binding<String>` one) plus a
-retained `TextViewCoordinator` is still the right approach — but the honest recommendation is to
-close it as "won't do" unless a concrete need appears.
+**Closed as won't-do.** Note this was never "delete unused code": `CodeEditorView` *is* the editor
+(`AppModel`, `ScriptManager`, `EditorRepresentable`, `ContentView` all depend on it), and
+`SourceEditor` belongs to a package we cannot drop because we consume its `TextViewController`
+directly. 4b only ever meant swapping our wrapper for theirs around the identical controller.
+
+The undo bug fixed on 2026-07-28 settled it: undo grouping resolves `textView.undoManager` along the
+responder chain, which is exactly the timing a `Binding<String>` round-trip cannot express. If it is
+ever revived, the `NSTextStorage` initialiser plus a retained `TextViewCoordinator` remains the only
+viable approach.
 
 ---
 
@@ -306,7 +311,7 @@ close it as "won't do" unless a concrete need appears.
 | 3 | Script picker popover → SwiftUI | ✅ done (`1c5f1cc`) |
 | — | **XCUITest suite** (regression oracle for Phase 4) | ✅ done (`b4c8acb`) |
 | 4a | SwiftUI app shell, `.commands`, `Settings` scene, toolbar | ✅ done (`3eac0df` + follow-up) |
-| 4b | `CodeEditorView` → `SourceEditor` | ⏸️ deferred — see "Why 4b is deferred" |
+| 4b | `CodeEditorView` → `SourceEditor` | ❌ won't do — see "Why 4b is closed" |
 
 **Phase 4 workflow:** run the full suite green *before* starting, then again after. Any test that
 goes red is either a real regression or a broken identifier — investigate, never weaken the test.
@@ -384,7 +389,6 @@ autosave, Shift-Tab, and the picker's view-update warnings). Remaining:
 1. **One residual "publishing from within view updates" warning** on the Return path, from
    `ScriptManager.runScript`'s `setStatus(.normal)`. Removing it means deferring `StatusStore`'s
    publish app-wide, which is a behaviour change to a shared component — not obviously worth it.
-2. Phase 4b, if it is ever revived — but see "Why 4b is deferred".
 
 For reference, the full suite is:
 
@@ -407,8 +411,8 @@ Xcode to release it.
 
 ## Deferred / out of scope
 
-- **Phase 4b** — replacing `CodeEditorView` with `SourceEditor`. Rationale for deferring (and for
-  probably dropping it) is under "Phase 4a → Why 4b is deferred".
+- **Phase 4b** — replacing `CodeEditorView` with `SourceEditor`. Closed as won't-do; see
+  "Phase 4a → Why 4b is closed (won't do)".
 - Fixing the `Scritch (App Store)` target's `Rearrange` module failure.
 - Adding the two orphaned unit test files to the pbxproj group.
 - `StatusView.fadeText(to:completionHandler:)` was dead code and was removed in Phase 2.

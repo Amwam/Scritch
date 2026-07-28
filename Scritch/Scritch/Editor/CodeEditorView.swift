@@ -3,8 +3,10 @@
 //  Scritch
 //
 //  A thin Scritch-shaped facade around CodeEditSourceEditor's `TextViewController`.
-//  Hosts the controller's view, exposes a simple text/selection API, and forwards
-//  change notifications. Instantiated from the XIB.
+//  Hosts the controller's view, exposes a simple text/selection API, and reports
+//  language changes. Owned for the app's lifetime by `AppModel` and handed to
+//  SwiftUI via `EditorRepresentable` (it used to be instantiated from the XIB,
+//  which Phase 4a deleted).
 //
 
 import AppKit
@@ -16,17 +18,11 @@ import CodeEditLanguages
 /// facade's closures.
 private final class EditorChangeCoordinator: CodeEditSourceEditor.TextViewCoordinator {
     var onTextChange: ((String) -> Void)?
-    var onSelectionChange: (([NSRange]) -> Void)?
 
     func prepareCoordinator(controller: TextViewController) {}
 
     func textViewDidChangeText(controller: TextViewController) {
         onTextChange?(controller.text)
-    }
-
-    func textViewDidChangeSelection(controller: TextViewController, newPositions: [CursorPosition]) {
-        let ranges = newPositions.map { $0.range }.sorted { $0.location < $1.location }
-        onSelectionChange?(ranges)
     }
 }
 
@@ -78,12 +74,6 @@ final class CodeEditorView: NSView {
         set { controller.setText(newValue) }
     }
 
-    /// Primary selection (first cursor).
-    var selectedRange: NSRange {
-        get { selectedRanges.first ?? NSRange(location: 0, length: 0) }
-        set { selectedRanges = [newValue] }
-    }
-
     /// All selections (multi-cursor), ordered by location.
     var selectedRanges: [NSRange] {
         get {
@@ -95,12 +85,6 @@ final class CodeEditorView: NSView {
             textView.selectionManager.setSelectedRanges(newValue)
         }
     }
-
-    /// Fired after text changes.
-    var onTextChange: ((String) -> Void)?
-
-    /// Fired after selection/cursor changes. Ranges ordered by location.
-    var onSelectionChange: (([NSRange]) -> Void)?
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
@@ -115,9 +99,6 @@ final class CodeEditorView: NSView {
     private func setUpController() {
         changeCoordinator.onTextChange = { [weak self] text in
             self?.handleTextChange(text)
-        }
-        changeCoordinator.onSelectionChange = { [weak self] ranges in
-            self?.onSelectionChange?(ranges)
         }
 
         let appearance = effectiveAppearance
@@ -155,8 +136,6 @@ final class CodeEditorView: NSView {
     }
 
     private func handleTextChange(_ text: String) {
-        onTextChange?(text)
-
         // Debounce, then detect on a background queue so typing never waits on
         // detection. The result is applied back on the main thread (UI work).
         textChangeDebounceWorkItem?.cancel()
@@ -246,7 +225,7 @@ final class CodeEditorView: NSView {
     }
 
     /// Set syntax-highlighting language (drives tree-sitter). Safe to call repeatedly.
-    func setLanguage(_ language: CodeLanguage) {
+    private func setLanguage(_ language: CodeLanguage) {
         guard controller.language.id != language.id else { return }
         controller.language = language
     }
