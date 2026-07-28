@@ -17,8 +17,8 @@ class ScriptManager: NSObject {
     static let userPreferencesPathKey = "scriptsFolderPath"
     static let userPreferencesDataKey = "scriptsFolderData"
     
-    // This probably does not belong here.
-    @IBOutlet weak var statusView: StatusView!
+    /// Status bar state. Settable so a later phase can inject it.
+    var statusStore: StatusStore = .shared
     
     let fuse = Fuse(threshold: 0.2)
     var scripts = [Script]()
@@ -186,7 +186,7 @@ class ScriptManager: NSObject {
     func runScript(_ script: Script, selection: String? = nil, fullText: String, insertIndex: Int? = nil) -> String {
         let scriptExecution = ScriptExecution(selection: selection, fullText: fullText, script: script, insertIndex: insertIndex)
         
-        self.statusView.setStatus(.normal)
+        self.statusStore.setStatus(.normal)
         script.run(with: scriptExecution)
         
         return scriptExecution.text ?? ""
@@ -207,7 +207,7 @@ class ScriptManager: NSObject {
         loadDefaultScripts()
         loadUserScripts()
         
-        statusView.setStatus(.success("Reloaded Scripts"))
+        statusStore.setStatus(.success("Reloaded Scripts"))
     }
     
     static func getBookmarkURL() throws -> URL? {
@@ -236,11 +236,11 @@ class ScriptManager: NSObject {
 
 extension ScriptManager: ScriptDelegate {
     func onScriptError(message: String) {
-        self.statusView.setStatus(.error(message))
+        self.statusStore.setStatus(.error(message))
     }
     
     func onScriptInfo(message: String) {
-        self.statusView.setStatus(.info(message))
+        self.statusStore.setStatus(.info(message))
     }
     
     

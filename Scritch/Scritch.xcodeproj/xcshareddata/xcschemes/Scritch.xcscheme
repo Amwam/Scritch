@@ -38,6 +38,16 @@
                ReferencedContainer = "container:Scritch.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "FA0000000000000000000C98"
+               BuildableName = "ScritchUITests.xctest"
+               BlueprintName = "ScritchUITests"
+               ReferencedContainer = "container:Scritch.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
