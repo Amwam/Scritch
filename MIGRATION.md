@@ -6,7 +6,9 @@ this up mid-flight.
 
 **Branch:** `swiftui-migration` (off `main`)
 **Started:** 2026-07-27
-**Status:** Phases 0–3 complete and verified. UI test suite in progress. Phase 4 not started.
+**Status:** Phases 0–4a complete. Phase 4a builds green with all 23 unit tests passing, but the
+XCUITest suite has **not** been run against it (see "Phase 4a" below) — that is the outstanding
+verification debt. Phase 4b (the `SourceEditor` swap) is deferred.
 
 ---
 
@@ -84,10 +86,10 @@ These have each cost real time. Read them.
   suite exists.
 - **New `.swift` files must be hand-registered in `project.pbxproj`** (PBXFileReference, two
   PBXBuildFiles, both targets' Sources phases, and the group). There is no Xcode automation here.
-  Object ID convention in use: `FA0000000000000000000C..`. Allocated so far: `C0x`–`C8x`.
-  **Next free prefix: `C9x`.** Verify edits with `plutil -lint`.
-- **Verify XIB edits parse** after any hand-editing:
-  `python3 -c "import xml.dom.minidom;xml.dom.minidom.parse('Scritch/UI/Base.lproj/MainMenu.xib');print('OK')"`
+  Object ID convention in use: `FA0000000000000000000C..`. Allocated so far: `C0x`–`CFx`.
+  **Next free prefix: `D0x`.** Verify edits with `plutil -lint`.
+- **`MainMenu.xib` is gone** (deleted in Phase 4a), so the old "verify XIB edits parse" check no
+  longer applies. There are no XIBs or storyboards left in the project.
 
 ---
 
@@ -107,6 +109,10 @@ Models introduced so far, all in `Scritch/Scritch/System/`:
 | `StatusStore` | `Status` enum, message queue, 10s display timing | `ScriptManager`, `UpdateBuddy`, `PopoverViewController` → `StatusBarView` |
 | `EditorLanguageModel` | current language, auto/manual mode, `displayName(for:)` | `CodeEditorView` → `LanguageStatusBarView` |
 | `ScriptPickerModel` | `isPresented`, query, results, selection, focus, list height | `PopoverViewController` → `ScriptPickerView` |
+| `AppModel` | the whole object graph the XIB used to instantiate; picker/script/editor actions | `ScritchApp`, `ScritchCommands`, `ContentView`, `AppDelegate` |
+
+As of Phase 4a the bridging pattern is inverted: SwiftUI owns the app, and `AppModel` is the single
+coordinator that the remaining AppKit shim (`AppDelegate`) reaches into via `AppModel.shared`.
 
 ---
 
@@ -169,14 +175,93 @@ Behaviour deliberately preserved:
 Verified at runtime: ⌘B opens, search field takes focus, live filtering, Esc dismisses, status text
 transitions, and a full `base64 enc` round-trip through the editor.
 
+### Phase 4a — SwiftUI app shell
+
+**Scope was deliberately split.** MIGRATION.md's original Phase 4 bundled the app shell together
+with replacing `CodeEditorView` with the package's `SourceEditor`. Those were separated:
+
+- **4a (this phase):** items 1–4 and 6 — the `App` struct, `.commands`, the `Settings` scene, the
+  toolbar, and `EditorLanguageModel` moving out of controller code.
+- **4b (deferred, and arguably should be dropped):** item 5, the `SourceEditor` swap. See
+  "Why 4b is deferred" below.
+
+Added:
+
+| File | Role |
+|---|---|
+| `ScritchApp.swift` | `@main App`; `Window` scene + `Settings` scene; `NSApplicationDelegateAdaptor` |
+| `ScritchCommands.swift` | `Commands` — everything `MainMenu.xib` customised |
+| `System/AppModel.swift` | the coordinator; owns the object graph the XIB used to instantiate |
+| `Views/ContentView.swift` | the window: editor + language bar + picker overlay + toolbar |
+| `Views/EditorRepresentable.swift` | 5-line `NSViewRepresentable` over `CodeEditorView` |
+
+Deleted: `MainViewController.swift`, `PopoverViewController.swift`, `StatusView.swift`,
+`SettingsWindowController.swift`, and `UI/Base.lproj/MainMenu.xib`. `Info.plist`'s `NSMainNibFile`
+key was removed — a SwiftUI `@main` app will fail to launch with it still present.
+
+Decisions worth knowing:
+- **`AppModel` is a singleton** (`private init()`, `.shared`). Not for convenience: the Services
+  provider (`AppDelegate.textServiceHandler`, named by `Info.plist`'s `NSServices` entry) has no
+  SwiftUI environment to read from and needs some way in.
+- **One `CodeEditorView` instance for the app's lifetime**, owned by `AppModel` and handed to
+  SwiftUI by `EditorRepresentable`. If the representable constructed its own, every SwiftUI rebuild
+  would drop the document, undo stack and language state.
+- **The Open/Close Picker menu swap** — previously `AppDelegate.setPopover(isOpen:)` toggling
+  `isHidden` — is now `if model.isPickerOpen` inside `CommandMenu("Scripts")`, driven by an
+  `@Published` mirror of `pickerModel.isPresented`.
+- **"@OKatBest on Twitter" is reproduced as a disabled no-op.** Checked the XIB before deleting it:
+  that item had no `<connections>` block at all, so AppKit auto-disabled it. It was always dead UI;
+  it was not wired to a URL that got lost in translation.
+- `hide()`'s old `asyncAfter` un-hiding hack and `PopoverViewController`'s `view.isHidden` juggling
+  are gone — SwiftUI removes the overlay from the hierarchy itself. The `DispatchQueue.main.async`
+  before setting `focus = .search` **was kept**; SwiftUI still needs a run-loop turn to install the
+  text field before it can take the keyboard.
+
+#### Verification status — READ BEFORE TRUSTING THIS PHASE
+
+- ✅ `** BUILD SUCCEEDED **`
+- ✅ `-only-testing:ScritchTests` → 23 tests, 0 failures (identical to the pre-phase baseline), plus
+  the new `AppModelTests`
+- ❌ **The 17 XCUITests were NOT run.** This phase was done with the machine's screen off, and
+  XCUITest needs the display. The suite exists precisely to be the before/after oracle for this
+  phase, and it has only been run *before*.
+
+**This is the top-priority follow-up.** Run the full suite and reconcile every failure before
+treating Phase 4a as done. Likely suspects if something is red, in rough order:
+1. The toolbar `statusBar.message` item — `.toolbar` in a `Window` scene renders differently from
+   the XIB's `customView` toolbar item, and the identifier may not survive.
+2. Menu-driven tests — SwiftUI `.commands` place items differently from the XIB, and the
+   Open/Close Picker conditional is a new mechanism.
+3. Focus/first-responder behaviour on picker open, now that no `makeFirstResponder(hostingView)`
+   call precedes SwiftUI's `@FocusState`.
+4. Window frame autosave — `AppDelegate` now resolves the window dynamically instead of via outlet.
+
+#### Why 4b is deferred
+
+`CodeEditorView` is already a facade over `TextViewController`, which is exactly what `SourceEditor`
+wraps internally — so swapping it buys no architectural simplification. Against that it risks two
+things the app depends on:
+
+- `ScriptManager.replaceText` → `CodeEditorView.replace(ranges:with:)`, which walks ranges
+  back-to-front inside one undo group. A `Binding<String>` cannot express that, and round-tripping
+  the document through a String binding would collapse undo and break multi-cursor scripts.
+- `editor.textView` carries the `editor.textView` accessibility identifier the entire XCUITest
+  suite hangs off.
+
+If 4b is ever revived, the `NSTextStorage` initialiser (not the `Binding<String>` one) plus a
+retained `TextViewCoordinator` is still the right approach — but the honest recommendation is to
+close it as "won't do" unless a concrete need appears.
+
 ---
 
 ## Current state
 
-- XIB: 750 → **538 lines**
-- Remaining AppKit interface-builder wiring: **23** `@IBOutlet`/`@IBAction`/`@NSApplicationMain`
-  references across 4 files — `AppDelegate.swift`, `MainViewController.swift`,
-  `PopoverViewController.swift`, `SettingsWindowController.swift`.
+- XIB: 750 → 538 → **deleted**. No XIBs or storyboards remain in the project.
+- Remaining AppKit interface-builder wiring: **zero** `@IBOutlet`/`@IBAction`/`@NSApplicationMain`
+  references (the only grep hit left is the word `@NSApplicationMain` inside a comment in
+  `ScritchApp.swift`).
+- `AppDelegate` is down to 4 responsibilities: the UI-test state reset, `applyTheme()`, the Services
+  provider, and window-frame autosave.
 
 ---
 
@@ -189,10 +274,15 @@ transitions, and a full `base64 enc` round-trip through the editor.
 | 2 | Status bars → SwiftUI | ✅ done (`f7983fb`) |
 | 3 | Script picker popover → SwiftUI | ✅ done (`1c5f1cc`) |
 | — | **XCUITest suite** (regression oracle for Phase 4) | ✅ done (`b4c8acb`) |
-| 4 | SwiftUI app shell, `.commands`, `SourceEditor` | ⏳ next |
+| 4a | SwiftUI app shell, `.commands`, `Settings` scene, toolbar | ⚠️ built & unit-tested, **XCUITests not yet run** |
+| 4b | `CodeEditorView` → `SourceEditor` | ⏸️ deferred — see "Why 4b is deferred" |
 
 **Phase 4 workflow:** run the full suite green *before* starting, then again after. Any test that
 goes red is either a real regression or a broken identifier — investigate, never weaken the test.
+
+**The "after" half of that workflow has not happened.** Phase 4a was implemented with the screen
+off, so only the build and the headless unit tests could be checked. Running the XCUITest suite
+against 4a is the next action, before any further phase.
 
 ### XCUITest suite — `b4c8acb` (done)
 
@@ -256,37 +346,31 @@ with "expected failure did not occur" on a clean machine — tying the suite's g
 *presence* of a stale debug session, exactly backwards. This was a real defect in the first
 version of the suite and was fixed; don't let it regress.
 
-### Next: Phase 4 — the app shell
+### Next: verify Phase 4a against the XCUITest suite
 
-The dangerous phase. Scope:
+Phase 4a is written, builds, and passes every headless unit test — but the oracle that exists
+specifically to catch what unit tests can't has not been run against it. Do this first:
 
-1. Replace `@NSApplicationMain` + `AppDelegate` with a SwiftUI `@main App` struct and a `Window`
-   scene. `AppDelegate` survives via `NSApplicationDelegateAdaptor` for the services provider
-   (`textServiceHandler`) and window frame autosave (`scritch.app.window`).
-2. Replace `MainMenu.xib`'s menus with `.commands`. Note `AppDelegate.setPopover(isOpen:)` currently
-   swaps the visibility of the Open/Close Picker menu items — that needs a SwiftUI equivalent.
-3. Replace `SettingsWindowController` with a real `Settings` scene and delete
-   `showPreferencesWindow`.
-4. Delete the `StatusView` hosting shim and use `StatusBarView` directly in a `.toolbar`.
-5. Replace the `CodeEditorView` facade (264 lines) with the package's SwiftUI `SourceEditor`.
-6. `EditorLanguageModel` moves into the SwiftUI environment; the constraint surgery in
-   `MainViewController.setUpLanguageStatusBar()` disappears entirely.
+```sh
+cd /Users/amit/Developer/Boop && xcodebuild \
+  -project Scritch/Scritch.xcodeproj -scheme Scritch -configuration Debug \
+  -destination 'platform=macOS' \
+  -clonedSourcePackagesDirPath /Users/amit/Developer/.spm-cache-scritch \
+  -skipPackagePluginValidation test
+```
 
-**The one hard problem.** `ScriptManager.replaceText` calls `editor.replace(ranges:with:)`, which
-walks ranges back-to-front inside a single undo group via `textView.replaceCharacters`. A
-`Binding<String>` cannot express that — round-tripping the whole document through a String binding
-would collapse undo and break multi-cursor scripts.
+Needs the screen on; takes ~3 minutes and seizes keyboard and mouse. See the failure-triage list in
+"Phase 4a → Verification status" above.
 
-`SourceEditor` (CodeEditSourceEditor 0.15.2) offers two initialisers: one taking
-`Binding<String>`, one taking an `NSTextStorage`. **Use the `NSTextStorage` variant** and keep a
-`TextViewCoordinator` handle for ranged mutation. Decide this before starting, not during.
-Selections are available via `SourceEditorState.cursorPositions`, whose `CursorPosition` exposes
-`.range` — that covers what `ScriptManager` reads.
+Also still worth the one manual check flagged earlier: **Shift-Tab reverse-highlight in the picker**,
+which the suite never covered and which Phase 4a did not touch.
 
 ---
 
 ## Deferred / out of scope
 
+- **Phase 4b** — replacing `CodeEditorView` with `SourceEditor`. Rationale for deferring (and for
+  probably dropping it) is under "Phase 4a → Why 4b is deferred".
 - Fixing the `Scritch (App Store)` target's `Rearrange` module failure.
 - Adding the two orphaned unit test files to the pbxproj group.
 - `StatusView.fadeText(to:completionHandler:)` was dead code and was removed in Phase 2.
