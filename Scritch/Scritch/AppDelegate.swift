@@ -6,21 +6,15 @@
 //  Copyright © 2019 OKatBest. All rights reserved.
 //
 //  Slimmed to what `NSApplicationDelegateAdaptor` needs and `Scene`s don't
-//  cover: the Services provider and window-frame autosave. Everything else
-//  (menus, preferences, the picker/script actions) moved to `AppModel` and
-//  `ScritchCommands` in Phase 4.
+//  cover: the UI-test state reset, `applyTheme()` and the Services provider.
+//  Everything else (menus, preferences, the picker/script actions) moved to
+//  `AppModel` and `ScritchCommands` in Phase 4; the window frame is autosaved
+//  by the `Window` scene itself — see `ScritchApp`.
 //
 
 import Cocoa
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-
-    // Frame auto save name for app window frame restoration.
-    private static let appWindowName = "scritch.app.window"
-
-    /// Resolved lazily in `applicationDidFinishLaunching`, since the XIB no
-    /// longer hands us the window directly.
-    private weak var mainWindow: NSWindow?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         resetStateForUITestsIfRequested()
@@ -31,12 +25,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSWindow.allowsAutomaticWindowTabbing = false
         NSApp.servicesProvider = self
-
-        // The `Window` scene's window exists by the time launch finishes.
-        // Be defensive: this must never crash if it's somehow not found.
-        let window = NSApp.windows.first(where: { $0.isVisible }) ?? NSApp.windows.first
-        mainWindow = window
-        window?.setFrameUsingName(AppDelegate.appWindowName)
     }
 
     /// UI tests launch the (sandboxed) app as a persistent process whose
@@ -56,11 +44,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Phase 4a — the old NSWindowController-hosted Preferences didn't
         // persist tab selection at all.
         defaults.removeObject(forKey: "com_apple_SwiftUI_Settings_selectedTabIndex")
-    }
-
-    func applicationWillTerminate(_ aNotification: Notification) {
-        // Memorize app window frame for restoration.
-        mainWindow?.saveFrame(usingName: AppDelegate.appWindowName)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
