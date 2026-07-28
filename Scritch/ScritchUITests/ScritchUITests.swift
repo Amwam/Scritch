@@ -340,12 +340,16 @@ final class ScritchUITests: XCTestCase {
 
         app.typeKey(",", modifierFlags: .command)
 
-        XCTAssertTrue(app.el("settings.tab.scripts").waitForExistence(timeout: 5))
-        XCTAssertTrue(app.el("settings.tab.colors").exists)
-        XCTAssertFalse(app.el("settings.colorSchemePicker").exists, "Colors tab shouldn't be active yet")
+        XCTAssertTrue(app.settingsTab("Scripts").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.settingsTab("Colors").exists)
+        // Hittability, not existence: the `Settings` scene builds both tab
+        // bodies eagerly, so the Colors picker is in the accessibility tree
+        // from the start. Only visibility distinguishes the active tab.
+        XCTAssertFalse(app.el("settings.colorSchemePicker").isHittable, "Colors tab shouldn't be active yet")
 
-        app.el("settings.tab.colors").click()
+        app.settingsTab("Colors").click()
         XCTAssertTrue(app.el("settings.colorSchemePicker").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.el("settings.colorSchemePicker").isHittable, "Colors tab should now be active")
 
         app.el("settings.colorSchemePicker").click()
         app.menuItems["Dark"].click()
@@ -356,8 +360,8 @@ final class ScritchUITests: XCTestCase {
         app.typeKey("w", modifierFlags: .command)
         app.typeKey(",", modifierFlags: .command)
 
-        XCTAssertTrue(app.el("settings.tab.colors").waitForExistence(timeout: 5))
-        app.el("settings.tab.colors").click()
+        XCTAssertTrue(app.settingsTab("Colors").waitForExistence(timeout: 5))
+        app.settingsTab("Colors").click()
         XCTAssertTrue(app.el("settings.colorSchemePicker").waitForExistence(timeout: 5))
         XCTAssertEqual(app.el("settings.colorSchemePicker").value as? String, "Dark")
     }

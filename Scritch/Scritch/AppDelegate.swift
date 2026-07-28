@@ -50,6 +50,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: "editorLanguageMode")
         defaults.removeObject(forKey: ScritchColorScheme.userPreferencesSchemeKey)
+        // SwiftUI's `Settings` scene remembers which tab was last open. Without
+        // this, a run that ends on the Colors tab makes the next run start
+        // there, and any test asserting on the default tab fails. Added in
+        // Phase 4a — the old NSWindowController-hosted Preferences didn't
+        // persist tab selection at all.
+        defaults.removeObject(forKey: "com_apple_SwiftUI_Settings_selectedTabIndex")
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

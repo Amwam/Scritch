@@ -26,12 +26,13 @@
 //                                  doesn't reliably expose a Menu's title as
 //                                  `label` to XCUITest) is the human-readable
 //                                  status ("Auto", "Auto · Bash", "Python", ...)
-//    settings.tab.scripts         - Preferences window's "Scripts" tab control
-//    settings.tab.colors          - Preferences window's "Colors" tab control
 //    settings.colorSchemePicker   - Preferences window's colour scheme picker
 //
 //  Menu item titles are also load-bearing and treated as stable, user-visible
 //  text (not identifiers): "Open Picker", "Close Picker", "Scripts" (menu).
+//
+//  So are the Preferences tab titles "Scripts" and "Colors" — see
+//  `settingsTab(_:)` below for why they cannot be identifiers.
 //
 import XCTest
 
@@ -96,6 +97,18 @@ extension XCUIApplication {
     /// a query is ambiguous rather than just picking one.
     func el(_ identifier: String) -> XCUIElement {
         descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// A Preferences tab, located by its user-visible label rather than an
+    /// accessibility identifier.
+    ///
+    /// SwiftUI's `Settings` scene renders `SettingsView`'s `TabView` as a
+    /// preferences *toolbar*, and an `.accessibilityIdentifier` applied to the
+    /// `Label` inside `.tabItem` does not survive that transformation — the
+    /// tabs arrive as plain buttons carrying only their title. There is no
+    /// supported API to identify them, so the label is the locator.
+    func settingsTab(_ title: String) -> XCUIElement {
+        buttons[title].firstMatch
     }
 
     var editorTextView: XCUIElement { el("editor.textView") }

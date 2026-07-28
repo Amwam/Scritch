@@ -6,9 +6,8 @@ this up mid-flight.
 
 **Branch:** `swiftui-migration` (off `main`)
 **Started:** 2026-07-27
-**Status:** Phases 0–4a complete. Phase 4a builds green with all 23 unit tests passing, but the
-XCUITest suite has **not** been run against it (see "Phase 4a" below) — that is the outstanding
-verification debt. Phase 4b (the `SourceEditor` swap) is deferred.
+**Status:** Phases 0–4a complete and fully verified — build green, 36 unit tests and all 17
+XCUITests passing. Phase 4b (the `SourceEditor` swap) is deferred.
 
 ---
 
@@ -73,8 +72,8 @@ These have each cost real time. Read them.
   dependency: 'Rearrange'` from `TextStory`. Confirmed against a clean tree. Keep its pbxproj
   entries consistent, but you can only verify the main `Scritch` target.
 - **`ScritchTests/LanguageDetectorTests.swift` and `ScriptManagerTests.swift` are not listed in the
-  pbxproj group**, yet their tests execute (23 pass). Don't be confused by this when editing that
-  target.
+  pbxproj group**, yet their tests execute. Don't be confused by this when editing that target.
+  (`AppModelTests.swift`, added in Phase 4a, *is* correctly registered in the group.)
 - **A stale Xcode `debugserver` can silently capture app launches.** Symptom: the process sits in
   state `SX` with `ppid != 1`, and `kill -9` will not reap it — only the tracer can release a
   traced+stopped process. Fix: press Stop (⌘.) in Xcode. **Do not kill the user's Xcode
@@ -95,8 +94,9 @@ These have each cost real time. Read them.
 
 ## Architecture: the bridging pattern
 
-Because the app is still `@NSApplicationMain` with `MainMenu.xib`, SwiftUI views are embedded into
-the AppKit hierarchy via `NSHostingView`. Each converted area follows the same shape:
+**Historical, for Phases 0–3.** While the app was still `@NSApplicationMain` with `MainMenu.xib`,
+SwiftUI views were embedded into the AppKit hierarchy via `NSHostingView`, and each converted area
+followed the same shape (Phase 4a removed the last of these hosting shims):
 
 > An `ObservableObject` model owns the state and behaviour. AppKit code writes to the model; the
 > SwiftUI view observes it. Consumers hold a **settable** `var model: Model = .shared` so Phase 4
@@ -217,24 +217,39 @@ Decisions worth knowing:
   before setting `focus = .search` **was kept**; SwiftUI still needs a run-loop turn to install the
   text field before it can take the keyboard.
 
-#### Verification status — READ BEFORE TRUSTING THIS PHASE
+#### Verification status
 
 - ✅ `** BUILD SUCCEEDED **`
-- ✅ `-only-testing:ScritchTests` → 23 tests, 0 failures (identical to the pre-phase baseline), plus
-  the new `AppModelTests`
-- ❌ **The 17 XCUITests were NOT run.** This phase was done with the machine's screen off, and
-  XCUITest needs the display. The suite exists precisely to be the before/after oracle for this
-  phase, and it has only been run *before*.
+- ✅ **36 unit tests, 0 failures** (23 pre-existing baseline + 13 new `AppModelTests`)
+- ✅ **17 XCUITests, 0 failures** — the full oracle, run after the fact once a display was available
 
-**This is the top-priority follow-up.** Run the full suite and reconcile every failure before
-treating Phase 4a as done. Likely suspects if something is red, in rough order:
-1. The toolbar `statusBar.message` item — `.toolbar` in a `Window` scene renders differently from
-   the XIB's `customView` toolbar item, and the identifier may not survive.
-2. Menu-driven tests — SwiftUI `.commands` place items differently from the XIB, and the
-   Open/Close Picker conditional is a new mechanism.
-3. Focus/first-responder behaviour on picker open, now that no `makeFirstResponder(hostingView)`
-   call precedes SwiftUI's `@FocusState`.
-4. Window frame autosave — `AppDelegate` now resolves the window dynamically instead of via outlet.
+The UI suite initially reported one failure,
+`testPreferencesWindowTabsAndColorSchemePersistence`, which took three fixes. All three were
+consequences of hosting `SettingsView` in a `Settings` scene rather than an `NSWindowController`;
+none was a functional regression:
+
+1. **Tab identifiers stopped resolving.** The scene renders the `TabView` as a preferences
+   *toolbar*, and `.accessibilityIdentifier` on the `Label` inside `.tabItem` does not survive that
+   transformation. Fixed by locating the tabs by visible label — see the contract note above.
+2. **Both tab bodies are built eagerly**, so `settings.colorSchemePicker` exists in the
+   accessibility tree even while the Scripts tab is showing. The test had used existence as a proxy
+   for "which tab is active"; it now uses `isHittable`, which is what it actually meant.
+3. **The scene persists the selected tab** under
+   `com_apple_SwiftUI_Settings_selectedTabIndex`, which leaked between runs and made the app start
+   on the Colors tab. Added to `resetStateForUITestsIfRequested()` — the old NSWindowController
+   didn't persist tab selection at all, so the hook had never needed it.
+
+#### Known wart: window frame autosave
+
+`AppDelegate` still saves/restores under `scritch.app.window`, but that key is **never written** —
+the app's defaults contain `NSWindow Frame main` and no `NSWindow Frame scritch.app.window`. The
+`Window("Scritch", id: "main")` scene autosaves the frame itself under its scene id, and wins.
+
+User-visible behaviour is correct (the frame *is* restored), so this is not urgent, but two things
+follow: existing users' frame saved under the old key is orphaned — a one-time window-position reset
+on upgrade — and the `AppDelegate` autosave code is now effectively dead. Either delete it and let
+the scene own the frame, or set the scene's autosave name to `scritch.app.window` to preserve
+continuity. Not done here because it is a behaviour question, not a mechanical one.
 
 #### Why 4b is deferred
 
@@ -274,15 +289,14 @@ close it as "won't do" unless a concrete need appears.
 | 2 | Status bars → SwiftUI | ✅ done (`f7983fb`) |
 | 3 | Script picker popover → SwiftUI | ✅ done (`1c5f1cc`) |
 | — | **XCUITest suite** (regression oracle for Phase 4) | ✅ done (`b4c8acb`) |
-| 4a | SwiftUI app shell, `.commands`, `Settings` scene, toolbar | ⚠️ built & unit-tested, **XCUITests not yet run** |
+| 4a | SwiftUI app shell, `.commands`, `Settings` scene, toolbar | ✅ done (`3eac0df` + follow-up) |
 | 4b | `CodeEditorView` → `SourceEditor` | ⏸️ deferred — see "Why 4b is deferred" |
 
 **Phase 4 workflow:** run the full suite green *before* starting, then again after. Any test that
 goes red is either a real regression or a broken identifier — investigate, never weaken the test.
 
-**The "after" half of that workflow has not happened.** Phase 4a was implemented with the screen
-off, so only the build and the headless unit tests could be checked. Running the XCUITest suite
-against 4a is the next action, before any further phase.
+Both halves happened for 4a: green before, and green after (once a display was available — the
+phase itself was implemented with the screen off, so the "after" run lagged the commit).
 
 ### XCUITest suite — `b4c8acb` (done)
 
@@ -308,11 +322,16 @@ Phase 4 must keep every one of these resolvable, or the oracle silently stops te
 | `picker.row.<Script Name>` | one per script, keyed by exact `Script.name` | e.g. `picker.row.Base64 Encode`. Carries accessibility **value** `"selected"`/`""` for highlight state, so tests never assume row order — script load order is not guaranteed |
 | `statusBar.message` | toolbar status pill | text exposed via accessibility **value**, not label |
 | `languageBar.picker` | bottom language bar menu button | text exposed via explicit `.accessibilityValue(...)` — macOS does not reliably expose a SwiftUI `Menu`'s title to XCUITest |
-| `settings.tab.scripts`, `settings.tab.colors` | Preferences tabs | |
 | `settings.colorSchemePicker` | Preferences colour-scheme picker | |
 
 Menu titles "Open Picker" / "Close Picker" / "Scripts" are treated as stable user-visible text
-rather than identifiers.
+rather than identifiers. **The Preferences tab titles "Scripts" and "Colors" joined them in Phase
+4a**: SwiftUI's `Settings` scene renders the `TabView` as a preferences *toolbar*, and an
+`.accessibilityIdentifier` on the `Label` inside `.tabItem` does not survive that transformation —
+the tabs arrive as plain buttons carrying only their title. There is no supported API to identify
+them, so `UITestSupport.settingsTab(_:)` locates them by label. `settings.tab.scripts` /
+`settings.tab.colors` are therefore **retired**; the identifiers are still set in `SettingsView.swift`
+but are inert while the Settings scene hosts it.
 
 The vocabulary is also documented in `ScritchUITests/UITestSupport.swift`'s header comment.
 
@@ -346,10 +365,16 @@ with "expected failure did not occur" on a clean machine — tying the suite's g
 *presence* of a stale debug session, exactly backwards. This was a real defect in the first
 version of the suite and was fixed; don't let it regress.
 
-### Next: verify Phase 4a against the XCUITest suite
+### Next
 
-Phase 4a is written, builds, and passes every headless unit test — but the oracle that exists
-specifically to catch what unit tests can't has not been run against it. Do this first:
+Phase 4a is done and verified. Remaining threads, in priority order:
+
+1. **Decide the window-frame autosave question** — see "Known wart" above.
+2. **Shift-Tab reverse-highlight** in the picker: still never covered by the suite, still worth one
+   manual check.
+3. Phase 4b, if it is ever revived — but see "Why 4b is deferred".
+
+For reference, the full suite is:
 
 ```sh
 cd /Users/amit/Developer/Boop && xcodebuild \
@@ -359,11 +384,12 @@ cd /Users/amit/Developer/Boop && xcodebuild \
   -skipPackagePluginValidation test
 ```
 
-Needs the screen on; takes ~3 minutes and seizes keyboard and mouse. See the failure-triage list in
-"Phase 4a → Verification status" above.
+Needs the screen on; takes ~3 minutes and seizes keyboard and mouse. Use
+`-only-testing:ScritchTests` for a headless unit-only run.
 
-Also still worth the one manual check flagged earlier: **Shift-Tab reverse-highlight in the picker**,
-which the suite never covered and which Phase 4a did not touch.
+**A stale Xcode debug session will break the UI run** with "Timed out while enabling automation
+mode" — check for a Scritch process in state `SX` whose parent is `debugserver`, and press ⌘. in
+Xcode to release it.
 
 ---
 
