@@ -8,9 +8,9 @@ Scritch is a macOS app: a scriptable scratchpad where you paste text and run Jav
 transformations over it. It is a fork of [Boop](https://github.com/IvanMathy/Boop) — most of the code
 and all of the design originate there, and Boop script compatibility is a deliberate constraint.
 
-The git repo directory is still named `Boop/`, but everything inside was renamed to Scritch. The
-Xcode project is `Scritch/Scritch.xcodeproj` (target/scheme `Scritch`, tests `ScritchTests` and
-`ScritchUITests`, bundle id `me.amwam.Scritch`). Deployment target macOS 14, Swift 5.
+The Xcode project sits one level down, at `Scritch/Scritch.xcodeproj` (target/scheme `Scritch`, tests
+`ScritchTests` and `ScritchUITests`, bundle id `me.amwam.Scritch`), so most paths below are
+`Scritch/Scritch/…`. Deployment target macOS 14, Swift 5.
 
 The UI was migrated from AppKit (XIB + storyboard + view controllers) to SwiftUI in July 2026. The
 XIB and storyboard are gone; comments across the codebase still narrate that migration in terms of
