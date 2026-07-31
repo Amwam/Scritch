@@ -14,8 +14,8 @@ import Combine
 
 final class AppModel: ObservableObject {
 
-    /// XIB-instantiated code (nothing left, post Phase 4) and the AppKit
-    /// services handler both need a way in that isn't SwiftUI's environment.
+    /// The AppKit services handler needs a way in that isn't SwiftUI's
+    /// environment; this is it.
     static let shared = AppModel()
 
     let scriptManager = ScriptManager()

@@ -4,7 +4,7 @@
 //
 //  The thin bar along the bottom of the window showing the editor's language and
 //  letting the user override the auto-detected guess. Driven entirely by
-//  `EditorLanguageModel`; hosted in the AppKit window by `MainViewController`.
+//  `EditorLanguageModel`; stacked under the editor by `ContentView`.
 //
 
 import SwiftUI

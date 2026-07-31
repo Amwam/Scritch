@@ -5,7 +5,7 @@
 //  The single source of truth for the script picker popover, in the same spirit
 //  as `StatusStore` and `EditorLanguageModel`. It owns presentation, the query,
 //  the results and the highlighted row; `ScriptPickerView` renders it and
-//  `PopoverViewController` wires it to `ScriptManager` / the editor.
+//  `AppModel` wires it to `ScriptManager` / the editor.
 //
 
 import AppKit

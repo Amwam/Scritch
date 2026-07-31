@@ -5,8 +5,7 @@
 //  The ⌘B script picker: a full-window dimming scrim with a rounded popover on
 //  top of it. Replaces OverlayView / PopoverContainerView / PopoverView /
 //  SearchField / ScriptTableView(+Cell) / ScriptsTableViewController. All state
-//  lives in `ScriptPickerModel`; `PopoverViewController` hosts this view inside
-//  the AppKit window until the window itself becomes SwiftUI.
+//  lives in `ScriptPickerModel`; `ContentView` overlays this view on the editor.
 //
 
 import SwiftUI
