@@ -34,6 +34,19 @@ final class AppModel: ObservableObject {
     /// `AppDelegate.setPopover(isOpen:)` used to.
     @Published private(set) var isPickerOpen = false
 
+    /// SwiftUI's `openWindow(id:)` environment action, captured from
+    /// `ContentView` since `AppDelegate` has no environment of its own. Used
+    /// to recreate the window after the user closes it — closing the app's
+    /// only `Window` scene no longer quits, see
+    /// `applicationShouldTerminateAfterLastWindowClosed`.
+    var openWindow: ((String) -> Void)?
+
+    static let mainWindowID = "scritch.app.window"
+
+    func reopenWindow() {
+        openWindow?(Self.mainWindowID)
+    }
+
     /// Wires the models together the way `PopoverViewController.viewDidLoad`
     /// and `MainViewController.setUpLanguageStatusBar` used to.
     private init() {

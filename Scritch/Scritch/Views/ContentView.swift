@@ -13,6 +13,7 @@ import SwiftUI
 struct ContentView: View {
 
     @EnvironmentObject var model: AppModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         ZStack {
@@ -39,6 +40,11 @@ struct ContentView: View {
             // `viewDidChangeEffectiveAppearance`; this just seeds the initial
             // appearance, as `MainViewController.viewDidLoad` used to.
             model.editor.applyTheme(for: NSApp.effectiveAppearance)
+
+            // `AppDelegate` has no environment of its own, so it reaches
+            // `openWindow` through here to recreate the window after the user
+            // closes it (see `AppModel.reopenWindow`).
+            model.openWindow = { id in openWindow(id: id) }
         }
     }
 }
