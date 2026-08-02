@@ -47,6 +47,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
+    }
+
+    /// Restores the window when the app is reactivated with none open —
+    /// clicking the Dock icon, or `⌘Tab`ing back — since closing the last
+    /// window now keeps the app (and its menu bar) running instead of quitting.
+    /// Closing a SwiftUI `Window` scene deallocates its `NSWindow`, so there's
+    /// nothing in `sender.windows` to reorder front; recreating it has to go
+    /// through the scene via `openWindow`, which `AppModel` captures for us.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            AppModel.shared.reopenWindow()
+        }
         return true
     }
 

@@ -22,7 +22,7 @@ struct ScritchApp: App {
         // build saved under means existing users keep their window position
         // instead of getting a one-time reset on upgrade; the scene now owns
         // the frame outright, and `AppDelegate`'s save/restore pair is gone.
-        Window("Scritch", id: "scritch.app.window") {
+        Window("Scritch", id: AppModel.mainWindowID) {
             ContentView()
                 .environmentObject(model)
         }
